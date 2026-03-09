@@ -1,99 +1,89 @@
-# ATmega32 DIO Driver (GPIO Driver)
+# DIO Driver (ATmega32)
 
-A configurable **Digital Input/Output (DIO) driver** for the **ATmega32 AVR microcontroller**, implemented in C using a modular **MCAL-style architecture**.
+Digital Input/Output driver for **ATmega32 AVR microcontroller** implemented as part of the **MCAL layer**.
 
-The driver abstracts direct register manipulation and provides a clean API for controlling GPIO pins and ports.
-Pin configuration is separated from the driver implementation to allow flexible project-level customization.
-
----
-
-# Microcontroller
-
-Target MCU: **ATmega32**
-
-Available GPIO Ports:
-
-* PORTA
-* PORTB
-* PORTC
-* PORTD
-
-Total Pins: **32 GPIO Pins**
+This driver provides an abstraction layer for controlling GPIO pins and ports without directly accessing hardware registers in the application layer.
 
 ---
 
-# Driver Architecture
-
-The driver follows a layered embedded architecture:
+# Driver Location
 
 ```
-Application
-    │
-    ▼
-DIO Driver (MCAL)
-    │
-    ▼
-Hardware Registers
+MCAL/DIO
 ```
 
-The application interacts with the **driver API**, while the driver internally manages register access.
+Configuration files are located in:
+
+```
+CFG/DIO
+```
 
 ---
 
-# Project Structure
+# Driver Features
+
+* Configure GPIO pins as:
+
+  * Output
+  * Input Floating
+  * Input Pull-up
+
+* Read and write digital pins
+
+* Toggle pin state
+
+* Read/write entire ports
+
+* Support for all **32 GPIO pins**
+
+---
+
+# File Structure
 
 ```
-Project
+MCAL/DIO
 │
-├── MCAL
-│   └── DIO
-│       ├── DIO_Int.h
-│       ├── DIO_Private.h
-│       └── DIO_Program.c
-│
-└── cfg
-    └── DIO
-        ├── DIO_Cfg.c
-        └── DIO_Cfg.h
+├── DIO_Int.h
+├── DIO_Private.h
+└── DIO_Program.c
 ```
 
 ### Description
 
-**MCAL/DIO**
+**DIO_Int.h**
 
-* `DIO_Int.h`
-  Public driver interface and user APIs.
+Public driver interface containing:
 
-* `DIO_Private.h`
-  Internal driver definitions and helper functions.
+* API declarations
+* enums
+* user types
 
-* `DIO_Program.c`
-  Implementation of the driver logic.
+**DIO_Private.h**
 
-**cfg/DIO**
+Internal driver definitions and helper functions.
 
-* `DIO_Cfg.c`
-  Contains the pin configuration array.
+**DIO_Program.c**
 
-* `DIO_Cfg.h`
-  Configuration header for the driver.
+Driver implementation including:
 
-Separating configuration from the driver allows the same driver to be reused across different projects.
+* Pin initialization
+* Pin read/write
+* Port operations
 
 ---
 
-# Pin Configuration
+# Configuration
 
-GPIO pin configuration is defined in:
+GPIO configuration is separated from the driver and located in:
 
 ```
-cfg/DIO/DIO_Cfg.c
+CFG/DIO/DIO_Cfg.c
 ```
 
-Pins are configured using the array:
+Pins are configured using:
 
-```c
-const DIO_Status_t PinsStatusArr[TOTAL_PINS];
+```
+PinsStatusArr[TOTAL_PINS]
 ```
 
 Example:
@@ -101,18 +91,17 @@ Example:
 ```c
 const DIO_Status_t PinsStatusArr[TOTAL_PINS] =
 {
-    INFREE,   /* PA0 */
-    OUTPUT,   /* PA1 */
-    OUTPUT,   /* PA2 */
-    OUTPUT,   /* PA3 */
+    OUTPUT,  /* PA0 */
+    OUTPUT,  /* PA1 */
+    INPULL,  /* PA2 */
 };
 ```
 
-### Available Modes
+### Available Pin Modes
 
 | Mode   | Description                 |
 | ------ | --------------------------- |
-| OUTPUT | Output pin                  |
+| OUTPUT | Output mode                 |
 | INFREE | Input floating              |
 | INPULL | Input with internal pull-up |
 
@@ -120,74 +109,47 @@ const DIO_Status_t PinsStatusArr[TOTAL_PINS] =
 
 # Driver APIs
 
-### Initialize Driver
+Initialize driver
 
-```c
+```
 void DIO_Init(void);
 ```
 
-Initializes all pins according to the configuration array.
+Write pin
 
----
-
-### Write to Pin
-
-```c
+```
 void DIO_WritePin(DIO_Pin_t pin, DIO_Voltage_t volt);
 ```
 
-Sets a pin output level.
+Read pin
 
-Parameters:
-
-* `pin` → Target pin
-* `volt` → `HIGH` or `LOW`
-
----
-
-### Read Pin
-
-```c
+```
 DIO_Voltage_t DIO_ReadPin(DIO_Pin_t pin);
 ```
 
-Reads the logic level of a pin.
+Toggle pin
 
----
-
-### Toggle Pin
-
-```c
+```
 void DIO_ToggelPin(DIO_Pin_t pin);
 ```
 
-Toggles the current state of the pin.
+Write port
 
----
-
-### Write Port
-
-```c
+```
 void DIO_WritePort(DIO_Port_t port, u8 data);
 ```
 
-Writes an 8-bit value to a GPIO port.
+Read port
 
----
-
-### Read Port
-
-```c
+```
 u8 DIO_ReadPort(DIO_Port_t port);
 ```
-
-Reads the current value of a GPIO port.
 
 ---
 
 # Example Usage
 
-```c
+```
 #include "DIO_Int.h"
 
 int main(void)
@@ -200,18 +162,6 @@ int main(void)
     }
 }
 ```
-
----
-
-# Design Highlights
-
-This driver demonstrates common embedded driver design practices:
-
-* Hardware abstraction layer
-* Configuration-driven initialization
-* Separation between driver and configuration
-* Modular embedded driver architecture
-* Pin and port abstraction
 
 ---
 
