@@ -1,29 +1,32 @@
-# AVR Drivers Library
+# ATmega32 Drivers Library
 
-A collection of reusable **low-level drivers for AVR microcontrollers**, implemented in C using a modular **MCAL-style architecture**.
+A collection of reusable **low-level drivers for the ATmega32 AVR microcontroller**, implemented in C using a modular **MCAL (Microcontroller Abstraction Layer)** architecture.
 
-This repository contains multiple drivers designed to simplify interaction with AVR hardware peripherals while keeping the application layer independent from direct register manipulation.
+This repository provides a set of peripheral drivers designed to simplify hardware interaction while keeping the application layer independent from direct register manipulation.
 
-The goal of this project is to build a structured **embedded driver library** following good embedded software practices such as modular design, configuration separation, and clear APIs.
+The project demonstrates structured embedded driver development including:
+
+* Hardware abstraction
+* Modular driver architecture
+* Clean and reusable APIs
+* Configuration separation
 
 ---
 
 # Target Microcontroller
 
-Primary target:
-
 **ATmega32**
 
-Architecture: **AVR 8-bit**
+Architecture: **8-bit AVR**
 
-All drivers are written to interact directly with AVR hardware registers defined in the memory map.
+Peripherals are controlled through direct register access using the memory map defined in `MemMap.h`.
 
 ---
 
 # Repository Structure
 
-```id="a8g3e5"
-AVR_Drivers
+```id="s9t6j7"
+ATMEGA32_Drivers
 │
 ├── MCAL
 │   ├── DIO
@@ -31,46 +34,80 @@ AVR_Drivers
 │   │   ├── DIO_Private.h
 │   │   └── DIO_Program.c
 │   │
-│   └── (Future Drivers)
-│       ├── UART
-│       ├── SPI
-│       ├── ADC
-│       └── TIMER
+│   └── ADC
+│       ├── ADC_Int.h
+│       ├── ADC_Private.h
+│       └── ADC_Program.c
 │
-├── cfg
-│   └── DIO
-│       ├── DIO_Cfg.c
-│       └── DIO_Cfg.h
+├── CFG
+│   ├── DIO
+│   │   ├── DIO_Cfg.c
+│   │   └── DIO_Cfg.h
+│   │
+│   └── ADC
+│       ├── ADC_Cfg.c
+│       └── ADC_Cfg.h
 │
-└── README.md
+├── MemMap.h
+├── StdTypes.h
+├── README.md
+└── LICENSE
 ```
 
 ---
 
 # Implemented Drivers
 
-## DIO Driver (GPIO)
+## DIO Driver (Digital Input Output)
 
-Provides APIs to control digital input/output pins of the ATmega32.
+Provides APIs for controlling GPIO pins and ports.
 
 Features:
 
-* Pin initialization through configuration array
-* Digital read/write operations
+* Configure pin direction
+* Input floating and pull-up modes
+* Write/read digital pins
+* Toggle pin state
 * Port read/write operations
-* Pin toggle functionality
-* Support for all 32 GPIO pins
 
-Driver Location:
+Location:
 
-```
+```id="q4g8vi"
 MCAL/DIO
 ```
 
-Configuration Location:
+Configuration:
 
+```id="p8i45u"
+CFG/DIO
 ```
-cfg/DIO
+
+---
+
+## ADC Driver (Analog to Digital Converter)
+
+Provides APIs for performing analog-to-digital conversions.
+
+Features:
+
+* Support for **8 ADC channels**
+* Configurable **voltage reference**
+* Configurable **ADC prescaler**
+* **Blocking ADC read**
+* **Non-blocking conversion**
+* **Periodic polling read**
+* Convert ADC value to **millivolts**
+
+Location:
+
+```id="if4dfk"
+MCAL/ADC
+```
+
+Configuration:
+
+```id="7cc4et"
+CFG/ADC
 ```
 
 ---
@@ -79,7 +116,7 @@ cfg/DIO
 
 The drivers follow a layered architecture commonly used in embedded systems.
 
-```
+```id="u1qvxy"
 Application Layer
         │
         ▼
@@ -89,32 +126,32 @@ Application Layer
  Hardware Registers
 ```
 
-Applications interact only with the driver APIs while the drivers handle the low-level register operations.
+Applications interact only with driver APIs while the drivers handle low-level register operations.
 
 ---
 
 # Design Principles
 
-The drivers in this repository follow several embedded software design principles:
+Drivers in this repository follow several embedded software design practices:
 
 * Hardware abstraction
 * Modular driver design
 * Separation between driver code and configuration
 * Readable and reusable APIs
-* Structured project organization
+* Consistent coding structure across drivers
 
 ---
 
 # Future Drivers
 
-Planned drivers for this library include:
+Planned drivers to be added:
 
 * UART Driver
 * SPI Driver
 * I2C (TWI) Driver
-* ADC Driver
 * Timer Driver
 * External Interrupt Driver
+* PWM Driver
 
 ---
 
