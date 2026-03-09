@@ -27,7 +27,8 @@ void ADC_Init(ADC_VREF_t vref,ADC_Prescaler_t scaler)
 	ADCSRA=ADCSRA|scaler;
 	/*enable ADC*/
 	SET_BIT(ADCSRA,ADEN);
-	CLR_BIT(ADCSRA,ADLAR);
+	CLR_BIT(ADMUX,ADLAR);
+	CLR_BIT(ADCSRA,ADATE);
 }
 u16 ADC_Read(ADC_Channel_t ch)
 {
@@ -70,7 +71,7 @@ u16 ADC_GetRead(void)
 	/*get read*/
 	return ADC;
 }
-error_t ADC_GetReadPerodic(u16*pdata)
+error_t ADC_GetReadPeriodic(u16*pdata)
 {
 	error_t r=OK;
 	if(!GET_BIT(ADCSRA,ADSC))
