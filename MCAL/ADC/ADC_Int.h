@@ -140,4 +140,25 @@ error_t ADC_GetReadPeriodic(u16*pdata);
  * @return ADC data register value.
  */
 u16 ADC_GetReadNoBlock(void);
+
+/**
+ * @brief Enables the ADC interrupt.
+ *
+ * This function enables the ADC Conversion Complete Interrupt.
+ * When the ADC finishes a conversion, the ADC interrupt will be triggered
+ * and the user-defined callback function will be executed.
+ */
+void ADC_InterruptEnable(void);
+
+/**
+ * @brief Sets the callback function for the ADC interrupt.
+ *
+ * This function registers a user-defined function that will be called
+ * automatically when the ADC conversion complete interrupt occurs.
+ *
+ * @param LocalFptr Pointer to the callback function.
+ *
+ * @note The callback function must take no parameters and return void.
+ */
+void ADC_SetCallBack(void (*LocalFptr)(void));
 #endif /* ADC_INT_H_ */
