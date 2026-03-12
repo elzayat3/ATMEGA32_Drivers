@@ -89,3 +89,19 @@ u16 ADC_GetReadNoBlock(void)
 {
 	return ADC;
 }
+void ADC_InterruptEnable(void)
+{
+	SET_BIT(ADCSRA,ADIE);
+}
+void ADC_SetCallBack(void (*LocalFptr)(void))
+{
+	ADC_Fptr = LocalFptr;
+}
+ISR(ADC_vect)
+{
+	if (ADC_Fptr!=NULLPTR)
+	{
+		ADC_Fptr();
+	}
+	ConversionFlag=0;
+}

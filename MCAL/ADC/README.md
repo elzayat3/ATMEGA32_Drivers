@@ -28,6 +28,8 @@ CFG/ADC
 * **Blocking ADC read**
 * **Non-blocking ADC conversion**
 * **Periodic polling read**
+* **Interrupt-based ADC conversion**
+* **Callback mechanism for ADC interrupt**
 * Convert ADC value to **millivolts**
 
 ---
@@ -153,6 +155,54 @@ u16 ADC_GetReadNoBlock(void);
 Returns the ADC register value without checking conversion status.
 
 ---
+
+## ADC Interrupt Enable
+
+```
+void ADC_InterruptEnable(void);
+```
+Enables the ADC Conversion Complete Interrupt.
+
+When the ADC finishes a conversion, an interrupt will be triggered.
+
+
+## Set ADC Callback Function
+
+```
+void ADC_SetCallBack(void (*LocalFptr)(void));
+```
+Registers a callback function that will be executed when the ADC conversion is completed.
+
+| Parameter | Description |
+|----------|-------------|
+| `LocalFptr` | Pointer to callback function executed after ADC conversion completes. |
+
+# Interrupt Usage Example
+
+```c
+#include "ADC_Int.h"
+
+void ADC_Done(void)
+{
+    u16 value = ADC_GetReadNoBlock();
+}
+
+int main(void)
+{
+    ADC_Init(VREF_VCC, ADC_SCALER_64);
+
+    ADC_SetCallBack(ADC_Done);
+    ADC_InterruptEnable();
+
+    ADC_StartConversion(CH_0);
+
+    while(1)
+    {
+
+    }
+}
+```
+
 
 # Example Usage
 
