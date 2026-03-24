@@ -53,6 +53,60 @@ typedef enum
   RISING_EDGE        /**< Rising edge trigger */
 }Trigger_t;
 
+/**
+
+* @brief External Interrupt state configuration
+*
+* @details
+* This enum is used to define whether a specific external interrupt
+* is enabled or disabled during initialization.
+  */
+typedef enum
+{
+  EXTI_DISABLE = 0, /**< External interrupt is disabled */
+  EXTI_ENABLE       /**< External interrupt is enabled  */
+}EXTI_State_t;
+
+/**
+
+* @brief External Interrupt configuration structure
+*
+* @details
+* This structure is used to configure each external interrupt (INT0, INT1, INT2)
+* during initialization phase.
+*
+* It defines:
+* * Which interrupt pin to configure
+* * The trigger condition
+* * Whether the interrupt is enabled or disabled
+*
+* @note
+* * INT0 and INT1 support all trigger modes.
+* * INT2 supports only FALLING_EDGE and RISING_EDGE.
+*
+* @par Example usage:
+* @code
+* EXTI_Config_t EXTI_ConfigArr[3] =
+* {
+* ```
+  {EX_INT0, FALLING_EDGE, EXTI_ENABLE},
+  ```
+* ```
+  {EX_INT1, RISING_EDGE,  EXTI_ENABLE},
+  ```
+* ```
+  {EX_INT2, FALLING_EDGE, EXTI_DISABLE}
+  ```
+* };
+* @endcode
+  */
+typedef struct
+{
+  Expin_t      pin;     /**< External interrupt source (INT0, INT1, INT2) */
+  Trigger_t    trigger; /**< Trigger condition */
+  EXTI_State_t state;   /**< Enable/Disable state */
+}EXTI_Config_t;
+
 /* ======================= APIs ======================= */
 
 /**

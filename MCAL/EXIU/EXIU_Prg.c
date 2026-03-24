@@ -48,9 +48,19 @@ void EXIU_disable(Expin_t pin)
 }
 void EXIU_Init(void)
 {
-	EXIU_triggeredge(EX_INT0,FALLING_EDGE);
-	EXIU_triggeredge(EX_INT1,FALLING_EDGE);
-	EXIU_triggeredge(EX_INT2,FALLING_EDGE);
+	for(uint8_t i = 0; i < 3; i++)
+	{
+		EXIU_triggeredge(EXTI_ConfigArr[i].pin, EXTI_ConfigArr[i].trigger);
+
+		if(EXTI_ConfigArr[i].state)
+		{
+			EXIU_enable(EXTI_ConfigArr[i].pin);
+		}
+		else
+		{
+			EXIU_disable(EXTI_ConfigArr[i].pin);
+		}
+	}
 }
 void EXIU_triggeredge(Expin_t pin,Trigger_t edge)
 {
