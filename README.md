@@ -9,7 +9,7 @@ The project demonstrates structured embedded driver development including:
 * Hardware abstraction
 * Modular driver architecture
 * Clean and reusable APIs
-* Configuration separation
+* Configuration separation (MCAL / CFG)
 
 ---
 
@@ -25,7 +25,7 @@ Peripherals are controlled through direct register access using the memory map d
 
 # Repository Structure
 
-```id="s9t6j7"
+```text
 ATMEGA32_Drivers
 │
 ├── MCAL
@@ -34,19 +34,28 @@ ATMEGA32_Drivers
 │   │   ├── DIO_Private.h
 │   │   └── DIO_Program.c
 │   │
-│   └── ADC
-│       ├── ADC_Int.h
-│       ├── ADC_Private.h
-│       └── ADC_Program.c
+│   ├── ADC
+│   │   ├── ADC_Int.h
+│   │   ├── ADC_Private.h
+│   │   └── ADC_Program.c
+│   │
+│   └── EXIU
+│       ├── EXIU_Int.h
+│       ├── EXIU_Private.h
+│       └── EXIU_Program.c
 │
 ├── CFG
 │   ├── DIO
 │   │   ├── DIO_Cfg.c
 │   │   └── DIO_Cfg.h
 │   │
-│   └── ADC
-│       ├── ADC_Cfg.c
-│       └── ADC_Cfg.h
+│   ├── ADC
+│   │   ├── ADC_Cfg.c
+│   │   └── ADC_Cfg.h
+│   │
+│   └── EXIU
+│       ├── EXIU_Cfg.c
+│       └── EXIU_Cfg.h
 │
 ├── MemMap.h
 ├── StdTypes.h
@@ -58,65 +67,100 @@ ATMEGA32_Drivers
 
 # Implemented Drivers
 
-## DIO Driver (Digital Input Output)
+## 🔹 DIO Driver (Digital Input Output)
 
 Provides APIs for controlling GPIO pins and ports.
 
-Features:
+### Features
 
-* Configure pin direction
-* Input floating and pull-up modes
+* Configure pin direction (OUTPUT / INFREE / INPULL)
 * Write/read digital pins
 * Toggle pin state
-* Port read/write operations
+* Full port read/write operations
+* Initialization via configuration array
 
-Location:
+### Location
 
-```id="q4g8vi"
+```
 MCAL/DIO
 ```
 
-Configuration:
+### Configuration
 
-```id="p8i45u"
+```
 CFG/DIO
 ```
 
 ---
 
-## ADC Driver (Analog to Digital Converter)
+## 🔹 ADC Driver (Analog to Digital Converter)
 
 Provides APIs for performing analog-to-digital conversions.
 
-Features:
+### Features
 
 * Support for **8 ADC channels**
 * Configurable **voltage reference**
 * Configurable **ADC prescaler**
-* **Blocking ADC read**
-* **Non-blocking conversion**
-* **Periodic polling read**
+* Blocking and non-blocking conversion
+* Periodic polling read
 * Convert ADC value to **millivolts**
 
-Location:
+### Location
 
-```id="if4dfk"
+```
 MCAL/ADC
 ```
 
-Configuration:
+### Configuration
 
-```id="7cc4et"
+```
 CFG/ADC
+```
+
+---
+
+## 🔹 EXTI Driver (External Interrupt Unit)
+
+Provides APIs for handling external interrupts **INT0, INT1, INT2**.
+
+### Features
+
+* Support for all external interrupts:
+
+  * INT0 (PD2)
+  * INT1 (PD3)
+  * INT2 (PB2)
+* Configurable trigger modes:
+
+  * LOW_LEVEL
+  * ANY_LOGIC_CHANGE
+  * FALLING_EDGE
+  * RISING_EDGE
+* Enable / Disable control per interrupt
+* Callback mechanism for ISR handling
+* Configuration-based initialization (no hardcoding)
+* Scalable design using callback array (no duplication)
+
+### Location
+
+```
+MCAL/EXIU
+```
+
+### Configuration
+
+```
+CFG/EXIU
 ```
 
 ---
 
 # Driver Architecture
 
-The drivers follow a layered architecture commonly used in embedded systems.
+The drivers follow a layered architecture commonly used in embedded systems:
 
-```id="u1qvxy"
+```text
 Application Layer
         │
         ▼
@@ -130,15 +174,69 @@ Applications interact only with driver APIs while the drivers handle low-level r
 
 ---
 
+# Configuration Concept
+
+Each driver is divided into:
+
+* **MCAL/** → Driver implementation (reusable)
+* **CFG/** → User configuration (project-specific)
+
+Example (EXTI):
+
+```c
+EXTI_Config_t EXTI_ConfigArr[EXTI_CONFIG_SIZE] =
+{
+    {EX_INT0, FALLING_EDGE, EXTI_ENABLE},
+    {EX_INT1, RISING_EDGE,  EXTI_ENABLE},
+    {EX_INT2, FALLING_EDGE, EXTI_DISABLE}
+};
+```
+
+---
+
+# Example Usage (EXTI + DIO)
+
+```c
+#include "DIO_Int.h"
+#include "EXIU_Int.h"
+
+void led_toggle(void)
+{
+    DIO_ToggelPin(PINC0);
+}
+
+int main(void)
+{
+    /* Initialize GPIO (from config) */
+    DIO_Init();
+
+    /* Set interrupt callback */
+    EXIU_SetCallback(EX_INT0, led_toggle);
+
+    /* Initialize EXTI (from config) */
+    EXIU_Init();
+
+    /* Enable global interrupts */
+    GLOBAL_ENABLE();
+
+    while(1)
+    {
+    }
+}
+```
+
+---
+
 # Design Principles
 
-Drivers in this repository follow several embedded software design practices:
+Drivers in this repository follow key embedded software practices:
 
-* Hardware abstraction
+* Hardware abstraction (no direct register access in application)
 * Modular driver design
-* Separation between driver code and configuration
-* Readable and reusable APIs
-* Consistent coding structure across drivers
+* Separation of configuration and logic
+* No magic numbers (enums & macros used)
+* Scalable and reusable architecture
+* Consistent coding style across all drivers
 
 ---
 
@@ -150,12 +248,11 @@ Planned drivers to be added:
 * SPI Driver
 * I2C (TWI) Driver
 * Timer Driver
-* External Interrupt Driver
 * PWM Driver
 
 ---
 
 # Author
 
-Abdelrahman Elzayat
+**Abdelrahman Elzayat**
 Embedded Systems Developer
