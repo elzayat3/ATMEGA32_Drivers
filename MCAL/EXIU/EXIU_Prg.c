@@ -3,7 +3,7 @@
 #include "EXIU_Int.h"
 #include "EXIU_Private.h"
 #include "EXIU_Cfg.h"
-static void (*exiu_callback[3])(void) = {NULLPTR};
+static void (*exiu_callback[EXTI_CONFIG_SIZE])(void) = {NULLPTR};
 void EXIU_enable(Expin_t pin)
 {
     switch(pin)
@@ -48,11 +48,11 @@ void EXIU_disable(Expin_t pin)
 }
 void EXIU_Init(void)
 {
-	for(uint8_t i = 0; i < 3; i++)
+	for(uint8_t i = 0; i < EXTI_CONFIG_SIZE; i++)
 	{
 		EXIU_triggeredge(EXTI_ConfigArr[i].pin, EXTI_ConfigArr[i].trigger);
 
-		if(EXTI_ConfigArr[i].state)
+		if(EXTI_ConfigArr[i].state == EXTI_ENABLE)
 		{
 			EXIU_enable(EXTI_ConfigArr[i].pin);
 		}
@@ -85,8 +85,7 @@ void EXIU_triggeredge(Expin_t pin,Trigger_t edge)
 			SET_BIT(MCUCR,ISC01);
 			break;
 			default:
-			CLR_BIT(MCUCR,ISC00);
-			SET_BIT(MCUCR,ISC01);
+			/* do nothing */
 			break;
 		}
 	}
@@ -111,8 +110,7 @@ void EXIU_triggeredge(Expin_t pin,Trigger_t edge)
 			SET_BIT(MCUCR,ISC11);
 			break;
 			default:
-			CLR_BIT(MCUCR,ISC10);
-			SET_BIT(MCUCR,ISC11);
+			/* do nothing */
 			break;
 			
 		}
@@ -128,7 +126,7 @@ void EXIU_triggeredge(Expin_t pin,Trigger_t edge)
 			SET_BIT(MCUCSR,ISC2);
 			break;
 			default:
-			CLR_BIT(MCUCSR,ISC2);
+			/* do nothing */
 			break;
 		}
 	}
