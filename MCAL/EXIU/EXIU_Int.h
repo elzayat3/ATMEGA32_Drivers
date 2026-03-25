@@ -6,21 +6,20 @@
 *
 * This driver provides APIs to configure and control external interrupts:
 * INT0, INT1, and INT2. It allows enabling/disabling interrupts, selecting
-* trigger conditions, and assigning callback functions to be executed
-* when an interrupt occurs.
+* trigger conditions, and assigning callback functions executed on interrupt.
 *
 * @details
 * External Interrupt Mapping:
-* * EX_INT0 -> PIND2
-* * EX_INT1 -> PIND3
-* * EX_INT2 -> PINB2
+* * EX_INT0 -> PD2
+* * EX_INT1 -> PD3
+* * EX_INT2 -> PB2
 *
 * @note
 * * INT2 supports only edge-triggered modes (FALLING_EDGE / RISING_EDGE).
 * * Callback functions are executed inside ISR context.
 *
 * @warning
-* Global interrupt must be enabled using GLOBAL_ENABLE() for interrupts to work.
+* Global interrupt must be enabled using GLOBAL_ENABLE().
   */
 
 #ifndef EXIU_INT_H_
@@ -36,9 +35,9 @@
   */
 typedef enum
 {
-  EX_INT0=0,  /**< External Interrupt 0 (PIND2) */
-  EX_INT1,  /**< External Interrupt 1 (PIND3) */
-  EX_INT2   /**< External Interrupt 2 (PINB2) */
+  EX_INT0 = 0, /**< External Interrupt 0 (PD2) */
+  EX_INT1,     /**< External Interrupt 1 (PD3) */
+  EX_INT2      /**< External Interrupt 2 (PB2) */
 }Expin_t;
 
 /**
@@ -55,36 +54,29 @@ typedef enum
 
 /**
 
-* @brief External Interrupt state configuration
+* @brief External interrupt state
 *
 * @details
-* This enum is used to define whether a specific external interrupt
-* is enabled or disabled during initialization.
+* Defines whether the interrupt is enabled or disabled during initialization.
   */
 typedef enum
 {
-  EXTI_DISABLE = 0, /**< External interrupt is disabled */
-  EXTI_ENABLE       /**< External interrupt is enabled  */
+  EXTI_DISABLE = 0, /**< Interrupt disabled */
+  EXTI_ENABLE       /**< Interrupt enabled  */
 }EXTI_State_t;
 
 /**
 
-* @brief External Interrupt configuration structure
+* @brief External interrupt configuration structure
 *
 * @details
-* This structure is used to configure each external interrupt (INT0, INT1, INT2)
-* during initialization phase.
-*
-* It defines:
-* * Which interrupt pin to configure
-* * The trigger condition
-* * Whether the interrupt is enabled or disabled
+* Used to configure each external interrupt during initialization.
 *
 * @note
 * * INT0 and INT1 support all trigger modes.
 * * INT2 supports only FALLING_EDGE and RISING_EDGE.
 *
-* @par Example usage:
+* @par Example
 * @code
 * EXTI_Config_t EXTI_ConfigArr[3] =
 * {
@@ -102,7 +94,7 @@ typedef enum
   */
 typedef struct
 {
-  Expin_t      pin;     /**< External interrupt source (INT0, INT1, INT2) */
+  Expin_t      pin;     /**< Interrupt source */
   Trigger_t    trigger; /**< Trigger condition */
   EXTI_State_t state;   /**< Enable/Disable state */
 }EXTI_Config_t;
@@ -111,64 +103,51 @@ typedef struct
 
 /**
 
-* @brief Initialize EXIU with default configuration
+* @brief Initialize EXIU using configuration array
 *
 * @details
-* This function sets the default trigger condition for all external interrupts.
-* Current default:
-* * INT0 -> FALLING_EDGE
-* * INT1 -> FALLING_EDGE
-* * INT2 -> FALLING_EDGE
+* Initializes all external interrupts based on EXTI_ConfigArr[].
 *
-* @pre DIO pins must be configured as input before calling this function.
+* @pre DIO pins must be configured as input.
   */
-void EXIU_Init(void);
+  void EXIU_Init(void);
 
 /**
 
 * @brief Enable external interrupt
 *
-* @param[in] pin External interrupt source (EX_INT0, EX_INT1, EX_INT2)
-*
-* @post The selected interrupt will start responding to trigger events.
+* @param[in] pin External interrupt source
   */
-void EXIU_enable(Expin_t pin);
+  void EXIU_enable(Expin_t pin);
 
 /**
 
 * @brief Disable external interrupt
 *
 * @param[in] pin External interrupt source
-*
-* @post The selected interrupt will no longer generate interrupts.
   */
-void EXIU_disable(Expin_t pin);
+  void EXIU_disable(Expin_t pin);
 
 /**
 
-* @brief Configure trigger condition for external interrupt
+* @brief Configure trigger condition
 *
 * @param[in] pin   External interrupt source
 * @param[in] edge  Trigger condition
-*
-* @note
-* * INT0 and INT1 support all trigger modes.
-* * INT2 supports only FALLING_EDGE and RISING_EDGE.
-    */
-void EXIU_triggeredge(Expin_t pin, Trigger_t edge);
+  */
+  void EXIU_triggeredge(Expin_t pin, Trigger_t edge);
 
 /**
 
-* @brief Set callback function for external interrupt
+* @brief Set callback function
 *
 * @param[in] pin   External interrupt source
 * @param[in] local Pointer to callback function
 *
 * @note
-* * Callback is executed inside ISR context.
-* * Keep the callback short and non-blocking.
-    */
-void EXIU_SetCallback(Expin_t pin, void(*local)(void));
+* Callback runs inside ISR → keep it short and non-blocking.
+  */
+  void EXIU_SetCallback(Expin_t pin, void(*local)(void));
 
 /* ======================= Global Interrupt ======================= */
 
@@ -176,12 +155,12 @@ void EXIU_SetCallback(Expin_t pin, void(*local)(void));
 
 * @brief Enable global interrupts
   */
-#define GLOBAL_ENABLE()   sei()
+  #define GLOBAL_ENABLE()   sei()
 
 /**
 
 * @brief Disable global interrupts
   */
-#define GLOBAL_DISABLE()  cli()
+  #define GLOBAL_DISABLE()  cli()
 
 #endif /* EXIU_INT_H_ */
