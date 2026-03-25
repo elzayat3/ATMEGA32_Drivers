@@ -58,15 +58,15 @@ EXTI_Config_t EXTI_ConfigArr[EXTI_CONFIG_SIZE] =
 
 ## 🚀 Usage
 
-### 1. Configure DIO Pins
+### 1. Initialize DIO
 
 ```c
-DIO_SetPinDirection(PORTD, PIN2, INPUT); // INT0
+DIO_Init();
 ```
 
 ---
 
-### 2. Initialize Driver
+### 2. Initialize EXTI
 
 ```c
 EXIU_Init();
@@ -95,17 +95,48 @@ GLOBAL_ENABLE();
 
 ---
 
+## 💡 Example
+
+```c
+#include "DIO_Int.h"
+#include "EXIU_Int.h"
+
+void led_toggle(void)
+{
+    DIO_ToggelPin(PINC0);
+}
+
+int main(void)
+{
+    /* Initialize GPIO based on configuration */
+    DIO_Init();
+
+    /* Register interrupt callback */
+    EXIU_SetCallback(EX_INT0, led_toggle);
+
+    /* Initialize EXTI based on configuration */
+    EXIU_Init();
+
+    /* Enable global interrupt */
+    GLOBAL_ENABLE();
+
+    while(1)
+    {
+    }
+}
+```
+
+---
+
 ## ⚠️ Notes
 
-* INT2 supports only:
+* GPIO configuration is handled via `DIO_Init()` using `DIO_Cfg.c`
+* Make sure:
 
-  * `FALLING_EDGE`
-  * `RISING_EDGE`
-* Callbacks are executed inside ISR context:
+  * INT0 (PIND2) is configured as input (INFREE / INPULL)
+  * LED pin (e.g., PINC0) is configured as OUTPUT
+* Callbacks run inside ISR → keep them short
 
-  * Keep them short
-  * Avoid blocking code
-* DIO must be configured before EXIU initialization
 
 ---
 
