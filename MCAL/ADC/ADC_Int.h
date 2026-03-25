@@ -161,4 +161,21 @@ void ADC_InterruptEnable(void);
  * @note The callback function must take no parameters and return void.
  */
 void ADC_SetCallBack(void (*LocalFptr)(void));
+/**
+
+* @brief Disable ADC interrupt
+*
+* @details
+* This function disables the ADC conversion complete interrupt
+* by clearing the ADIE (ADC Interrupt Enable) bit in ADCSRA register.
+*
+* @note
+* * After disabling the interrupt, the ADC will no longer trigger ISR
+* when conversion is completed.
+* * This function does not stop an ongoing conversion.
+*
+* @see ADC_InterruptEnable
+  */
+void ADC_InterruptDisable(void);
+
 #endif /* ADC_INT_H_ */
