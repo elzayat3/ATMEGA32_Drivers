@@ -11,6 +11,63 @@
  */
 
 #include "StdTypes.h"
+/**
+ * @defgroup TIMER_Pins Timer Output Compare Pins
+ * @brief Hardware pins used by Timer Output Compare Units (OCU)
+ *
+ * These pins are automatically controlled by the timer hardware
+ * when Output Compare or PWM modes are enabled.
+ *
+ * @note The corresponding pin must be configured as OUTPUT using DDR register.
+ *
+ * @{
+ */
+
+/**
+ * @brief Timer0 Output Compare Pin
+ *
+ * - Signal: OC0
+ * - Port: PORTB
+ * - Pin:  PINB3
+ *
+ * @note Used for PWM and CTC toggle operations
+ */
+#define TIMER0_OC0_PIN   PINB3
+
+/**
+ * @brief Timer1 Output Compare A Pin
+ *
+ * - Signal: OC1A
+ * - Port: PORTD
+ * - Pin:  PIND5
+ *
+ * @note Used for PWM (channel A)
+ */
+#define TIMER1_OC1A_PIN  PIND5
+
+/**
+ * @brief Timer1 Output Compare B Pin
+ *
+ * - Signal: OC1B
+ * - Port: PORTD
+ * - Pin:  PIND4
+ *
+ * @note Used for PWM (channel B)
+ */
+#define TIMER1_OC1B_PIN  PIND4
+
+/**
+ * @brief Timer2 Output Compare Pin
+ *
+ * - Signal: OC2
+ * - Port: PORTD
+ * - Pin:  PIND7
+ *
+ * @note Used for PWM and toggle operations
+ */
+#define TIMER2_OC2_PIN   PIND7
+
+/** @} */
 
 /**
  * @brief Timer channel selection
@@ -160,7 +217,14 @@ typedef struct
     uint16_t compare_A;             /**< OCR1A */
     uint16_t compare_B;             /**< OCR1B */
 
-    uint16_t top_value;             /**< ICR1 أو OCR1A */
+		/**
+	 * @brief TOP value for Timer1
+	 *
+	 * Used as:
+	 * - ICR1 in modes: FAST_PWM_ICR1 / PHASE_CORRECT_ICR1
+	 * - OCR1A in modes: FAST_PWM_OCR1A
+	 */
+	uint16_t top_value;
 
 } TIMER1_Config_t;
 
@@ -175,8 +239,9 @@ typedef enum
     TIMER_INT_ICU       /**< Input Capture Unit */
 } TIMER_InterruptSource_t;
 
+
 /* =========================================================
- * 🔹 APIs
+ *  APIs
  * ========================================================= */
 
 /**
@@ -206,5 +271,113 @@ error_t TIMER1_Init(void);
  * @return error_t
  */
 error_t TIMER2_Init(void);
+/* =========================
+ * Timer0 API
+ * ========================= */
+
+/**
+ * @brief Set Timer0 counter value (TCNT0)
+ * @param[in] value Counter value (0-255)
+ */
+void TIMER0_SetCounter(uint8_t value);
+
+/**
+ * @brief Get Timer0 counter value (TCNT0)
+ * @return Current TCNT0 value
+ */
+uint8_t TIMER0_GetCounter(void);
+
+/**
+ * @brief Set Timer0 compare value (OCR0)
+ * @param[in] value Compare value (0-255)
+ */
+void TIMER0_SetCompare(uint8_t value);
+
+/**
+ * @brief Get Timer0 compare value (OCR0)
+ * @return Current OCR0 value
+ */
+uint8_t TIMER0_GetCompare(void);
+
+/* =========================
+ * Timer1 API
+ * ========================= */
+
+/**
+ * @brief Set Timer1 counter value (TCNT1)
+ * @param[in] value Counter value (0-65535)
+ */
+void TIMER1_SetCounter(uint16_t value);
+
+/**
+ * @brief Get Timer1 counter value (TCNT1)
+ * @return Current TCNT1 value
+ */
+uint16_t TIMER1_GetCounter(void);
+
+/**
+ * @brief Set Timer1 Compare A value (OCR1A)
+ * @param[in] value Compare value (0-65535)
+ */
+void TIMER1_SetCompareA(uint16_t value);
+
+/**
+ * @brief Get Timer1 Compare A value (OCR1A)
+ * @return Current OCR1A value
+ */
+uint16_t TIMER1_GetCompareA(void);
+
+/**
+ * @brief Set Timer1 Compare B value (OCR1B)
+ * @param[in] value Compare value (0-65535)
+ */
+void TIMER1_SetCompareB(uint16_t value);
+
+/**
+ * @brief Get Timer1 Compare B value (OCR1B)
+ * @return Current OCR1B value
+ */
+uint16_t TIMER1_GetCompareB(void);
+
+/**
+ * @brief Set Timer1 top value (ICR1)
+ * @param[in] value Top value (0-65535)
+ */
+void TIMER1_SetTop(uint16_t value);
+
+/**
+ * @brief Get Timer1 top value (ICR1)
+ * @return Current ICR1 value
+ */
+uint16_t TIMER1_GetTop(void);
+
+/* =========================
+ * Timer2 API
+ * ========================= */
+
+/**
+ * @brief Set Timer2 counter value (TCNT2)
+ * @param[in] value Counter value (0-255)
+ */
+void TIMER2_SetCounter(uint8_t value);
+
+/**
+ * @brief Get Timer2 counter value (TCNT2)
+ * @return Current TCNT2 value
+ */
+uint8_t TIMER2_GetCounter(void);
+
+/**
+ * @brief Set Timer2 compare value (OCR2)
+ * @param[in] value Compare value (0-255)
+ */
+void TIMER2_SetCompare(uint8_t value);
+
+/**
+ * @brief Get Timer2 compare value (OCR2)
+ * @return Current OCR2 value
+ */
+uint8_t TIMER2_GetCompare(void);
+
 
 #endif /* TIMER_INT_H_ */

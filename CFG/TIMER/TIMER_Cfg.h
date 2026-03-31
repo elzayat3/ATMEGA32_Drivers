@@ -14,7 +14,6 @@
  * where all timer parameters are defined statically before compilation.
  */
 
-#include "TIMER_INT.h"
 
 /* =========================================================
  *  External Configuration Structures

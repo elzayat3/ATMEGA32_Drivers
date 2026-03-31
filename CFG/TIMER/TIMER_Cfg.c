@@ -1,7 +1,7 @@
 #include "StdTypes.h"
 #include "MemMap.h"
-#include "TIMER_Int.h"
 #include "TIMER_Private.h"
+#include "TIMER_Int.h"
 #include "TIMER_Cfg.h"
 
 /* =========================================================
@@ -15,10 +15,10 @@ const TIMER0_Config_t TIMER0_CFG =
     .mode = TIMER0_MODE_FAST_PWM,
     /*
      * Options:
-     * - NORMAL               → overflow-based timing
-     * - CTC                  → interrupt on compare match
-     * - FAST_PWM             → high-speed PWM
-     * - PHASE_CORRECT_PWM    → symmetric PWM (less distortion)
+     * - NORMAL               ? overflow-based timing
+     * - CTC                  ? interrupt on compare match
+     * - FAST_PWM             ? high-speed PWM
+     * - PHASE_CORRECT_PWM    ? symmetric PWM (less distortion)
      */
 
     /* =========================
@@ -37,10 +37,10 @@ const TIMER0_Config_t TIMER0_CFG =
     .oc_mode = TIMER_OC_DISCONNECTED,
     /*
      * Used only in NORMAL and CTC modes:
-     * - DISCONNECTED → OC pin is normal GPIO
-     * - TOGGLE       → toggle pin on compare match
-     * - CLEAR        → set pin LOW on compare match
-     * - SET          → set pin HIGH on compare match
+     * - DISCONNECTED ? OC pin is normal GPIO
+     * - TOGGLE       ? toggle pin on compare match
+     * - CLEAR        ? set pin LOW on compare match
+     * - SET          ? set pin HIGH on compare match
      */
 
     /* =========================
@@ -73,7 +73,7 @@ const TIMER0_Config_t TIMER0_CFG =
     .compare_value = 128
     /*
      * In PWM:
-     *   Duty cycle ≈ 128 / 255 ≈ 50%
+     *   Duty cycle ? 128 / 255 ? 50%
      *
      * In CTC:
      *   Determines compare match timing
@@ -90,8 +90,8 @@ const TIMER1_Config_t TIMER1_CFG =
     .mode = TIMER1_MODE_FAST_PWM_ICR1,
     /*
      * Recommended modes:
-     * - FAST_PWM_ICR1 → user-defined TOP (best for control systems)
-     * - CTC_OCR1A     → simple timing
+     * - FAST_PWM_ICR1 ? user-defined TOP (best for control systems)
+     * - CTC_OCR1A     ? simple timing
      */
 
     /* =========================
@@ -157,7 +157,7 @@ const TIMER1_Config_t TIMER1_CFG =
      */
 };
 /* =========================================================
- * 🔹 Timer2 Configuration (8-bit)
+ * ?? Timer2 Configuration (8-bit)
  * ========================================================= */
 const TIMER2_Config_t TIMER2_CFG =
 {
@@ -174,7 +174,7 @@ const TIMER2_Config_t TIMER2_CFG =
      * ========================= */
     .prescaler = TIMER_PRESCALER_8,
     /*
-     * Slower timer → longer intervals
+     * Slower timer ? longer intervals
      */
 
     /* =========================
