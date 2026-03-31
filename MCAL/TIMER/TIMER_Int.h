@@ -4,380 +4,471 @@
 /**
  * @file TIMER_INT.h
  * @author Abdelrahman Elzayat
- * @brief Timer Driver Interface for ATmega32
+ * @brief Public interface for the ATmega32 Timer driver.
  *
- * This file contains all public APIs, data types, and configuration
- * structures for Timer0, Timer1, and Timer2.
+ * This file contains the public data types, configuration structures,
+ * symbolic constants, and API declarations for Timer0, Timer1, and Timer2
+ * on the ATmega32 microcontroller.
  */
 
 #include "StdTypes.h"
+
+/* ========================================================================== */
+/*                            Output Compare Pins                             */
+/* ========================================================================== */
+
 /**
- * @defgroup TIMER_Pins Timer Output Compare Pins
- * @brief Hardware pins used by Timer Output Compare Units (OCU)
+ * @defgroup TIMER_OutputComparePins Timer Output Compare Pins
+ * @brief Hardware pins associated with timer output compare units.
  *
- * These pins are automatically controlled by the timer hardware
- * when Output Compare or PWM modes are enabled.
+ * These pins are driven by the timer hardware when Output Compare or PWM
+ * functionality is enabled.
  *
- * @note The corresponding pin must be configured as OUTPUT using DDR register.
- *
+ * @note The corresponding GPIO pin must be configured as output before use.
  * @{
  */
 
 /**
- * @brief Timer0 Output Compare Pin
+ * @brief Timer0 Output Compare pin.
  *
- * - Signal: OC0
- * - Port: PORTB
- * - Pin:  PINB3
- *
- * @note Used for PWM and CTC toggle operations
+ * This pin is associated with the OC0 signal and is used in CTC and PWM modes.
  */
 #define TIMER0_OC0_PIN   PINB3
 
 /**
- * @brief Timer1 Output Compare A Pin
+ * @brief Timer1 Output Compare A pin.
  *
- * - Signal: OC1A
- * - Port: PORTD
- * - Pin:  PIND5
- *
- * @note Used for PWM (channel A)
+ * This pin is associated with the OC1A signal and is used in compare and PWM modes.
  */
 #define TIMER1_OC1A_PIN  PIND5
 
 /**
- * @brief Timer1 Output Compare B Pin
+ * @brief Timer1 Output Compare B pin.
  *
- * - Signal: OC1B
- * - Port: PORTD
- * - Pin:  PIND4
- *
- * @note Used for PWM (channel B)
+ * This pin is associated with the OC1B signal and is used in compare and PWM modes.
  */
 #define TIMER1_OC1B_PIN  PIND4
 
 /**
- * @brief Timer2 Output Compare Pin
+ * @brief Timer2 Output Compare pin.
  *
- * - Signal: OC2
- * - Port: PORTD
- * - Pin:  PIND7
- *
- * @note Used for PWM and toggle operations
+ * This pin is associated with the OC2 signal and is used in CTC and PWM modes.
  */
 #define TIMER2_OC2_PIN   PIND7
 
 /** @} */
 
+/* ========================================================================== */
+/*                               Common Types                                 */
+/* ========================================================================== */
+
 /**
- * @brief Timer channel selection
+ * @brief Timer channel identifiers.
  */
 typedef enum
 {
-    TIMER0 = 0, /**< 8-bit Timer0 */
-    TIMER1,     /**< 16-bit Timer1 */
-    TIMER2      /**< 8-bit Timer2 */
+    TIMER0 = 0, /**< Select Timer0. */
+    TIMER1,     /**< Select Timer1. */
+    TIMER2      /**< Select Timer2. */
 } TIMER_Channel_t;
 
 /**
- * @brief Timer clock prescaler options
+ * @brief Timer clock source and prescaler options.
  *
- * @note Values must match hardware CS bits
+ * These values map directly to the clock select bits of the timer hardware.
  */
 typedef enum
 {
-    TIMER_NO_CLOCK = 0,       /**< Timer stopped */
-    TIMER_PRESCALER_1,        /**< No prescaling */
-    TIMER_PRESCALER_8,        /**< clk/8 */
-    TIMER_PRESCALER_64,       /**< clk/64 */
-    TIMER_PRESCALER_256,      /**< clk/256 */
-    TIMER_PRESCALER_1024,     /**< clk/1024 */
-    TIMER_EXTERNAL_FALLING,   /**< External clock (falling edge) */
-    TIMER_EXTERNAL_RISING     /**< External clock (rising edge) */
+    TIMER_NO_CLOCK = 0,     /**< No clock source; timer stopped. */
+    TIMER_PRESCALER_1,      /**< System clock with no prescaling. */
+    TIMER_PRESCALER_8,      /**< System clock divided by 8. */
+    TIMER_PRESCALER_64,     /**< System clock divided by 64. */
+    TIMER_PRESCALER_256,    /**< System clock divided by 256. */
+    TIMER_PRESCALER_1024,   /**< System clock divided by 1024. */
+    TIMER_EXTERNAL_FALLING, /**< External clock source on falling edge. */
+    TIMER_EXTERNAL_RISING   /**< External clock source on rising edge. */
 } TIMER_Prescaler_t;
 
-
 /**
- * @brief PWM output behavior
+ * @brief PWM output behavior.
  */
 typedef enum
 {
-    TIMER_PWM_NON_INVERTING, /**< Clear on compare, set at BOTTOM */
-    TIMER_PWM_INVERTING      /**< Set on compare, clear at BOTTOM */
+    TIMER_PWM_NON_INVERTING, /**< Non-inverting PWM mode. */
+    TIMER_PWM_INVERTING      /**< Inverting PWM mode. */
 } TIMER_PWM_Mode_t;
 
-
 /**
- * @brief Output Compare behavior for Normal/CTC modes
+ * @brief Output Compare behavior for Timer0 and Timer2 in non-PWM modes.
  */
 typedef enum
 {
-    TIMER_OC_DISCONNECTED = 0, /**< Normal port operation */
-    TIMER_OC_TOGGLE,           /**< Toggle OC pin on compare match */
-    TIMER_OC_CLEAR,            /**< Clear OC pin on compare match */
-    TIMER_OC_SET               /**< Set OC pin on compare match */
+    TIMER_OC_DISCONNECTED = 0, /**< Disconnect OC pin from timer compare output. */
+    TIMER_OC_TOGGLE,           /**< Toggle OC pin on compare match. */
+    TIMER_OC_CLEAR,            /**< Clear OC pin on compare match. */
+    TIMER_OC_SET               /**< Set OC pin on compare match. */
 } TIMER_OC_Mode_t;
 
+/* ========================================================================== */
+/*                                Timer0 Types                                */
+/* ========================================================================== */
+
 /**
- * @brief Timer0 operating modes
+ * @brief Timer0 operating modes.
  */
 typedef enum
 {
-    TIMER0_MODE_NORMAL,
-    TIMER0_MODE_CTC,
-    TIMER0_MODE_FAST_PWM,
-    TIMER0_MODE_PHASE_CORRECT_PWM
+    TIMER0_MODE_NORMAL,             /**< Normal counting mode. */
+    TIMER0_MODE_CTC,                /**< Clear Timer on Compare Match mode. */
+    TIMER0_MODE_FAST_PWM,           /**< Fast PWM mode. */
+    TIMER0_MODE_PHASE_CORRECT_PWM   /**< Phase Correct PWM mode. */
 } TIMER0_Mode_t;
 
 /**
- * @brief Timer0 configuration structure
+ * @brief Timer0 configuration structure.
  */
 typedef struct
 {
-    TIMER0_Mode_t mode;             /**< Timer mode */
-    TIMER_Prescaler_t prescaler;    /**< Clock prescaler */
-
-    TIMER_OC_Mode_t oc_mode;        /**< Used in Normal/CTC modes */
-    TIMER_PWM_Mode_t pwm_mode;      /**< Used in PWM modes */
-
-    uint8_t initial_value;          /**< TCNT0 initial value (0-255) */
-    uint8_t compare_value;          /**< OCR0 value (0-255) */
-
+    TIMER0_Mode_t mode;          /**< Timer0 operating mode. */
+    TIMER_Prescaler_t prescaler; /**< Timer0 clock source / prescaler. */
+    TIMER_OC_Mode_t oc_mode;     /**< Output Compare behavior in Normal/CTC modes. */
+    TIMER_PWM_Mode_t pwm_mode;   /**< PWM output behavior in PWM modes. */
+    uint8_t initial_value;       /**< Initial value loaded into TCNT0. */
+    uint8_t compare_value;       /**< Compare value loaded into OCR0. */
 } TIMER0_Config_t;
 
-
+/* ========================================================================== */
+/*                                Timer2 Types                                */
+/* ========================================================================== */
 
 /**
- * @brief Timer2 operating modes
+ * @brief Timer2 operating modes.
  */
 typedef enum
 {
-    TIMER2_MODE_NORMAL,
-    TIMER2_MODE_CTC,
-    TIMER2_MODE_FAST_PWM,
-    TIMER2_MODE_PHASE_CORRECT_PWM
+    TIMER2_MODE_NORMAL,             /**< Normal counting mode. */
+    TIMER2_MODE_CTC,                /**< Clear Timer on Compare Match mode. */
+    TIMER2_MODE_FAST_PWM,           /**< Fast PWM mode. */
+    TIMER2_MODE_PHASE_CORRECT_PWM   /**< Phase Correct PWM mode. */
 } TIMER2_Mode_t;
 
 /**
- * @brief Timer2 configuration structure
+ * @brief Timer2 configuration structure.
  */
 typedef struct
 {
-    TIMER2_Mode_t mode;
-    TIMER_Prescaler_t prescaler;
-
-    TIMER_OC_Mode_t oc_mode;
-    TIMER_PWM_Mode_t pwm_mode;
-
-    uint8_t initial_value;   /**< 0-255 */
-    uint8_t compare_value;   /**< 0-255 */
-
+    TIMER2_Mode_t mode;          /**< Timer2 operating mode. */
+    TIMER_Prescaler_t prescaler; /**< Timer2 clock source / prescaler. */
+    TIMER_OC_Mode_t oc_mode;     /**< Output Compare behavior in Normal/CTC modes. */
+    TIMER_PWM_Mode_t pwm_mode;   /**< PWM output behavior in PWM modes. */
+    uint8_t initial_value;       /**< Initial value loaded into TCNT2. */
+    uint8_t compare_value;       /**< Compare value loaded into OCR2. */
 } TIMER2_Config_t;
 
+/* ========================================================================== */
+/*                                Timer1 Types                                */
+/* ========================================================================== */
 
 /**
- * @brief Timer1 operating modes
+ * @brief Timer1 operating modes.
  */
 typedef enum
 {
-    TIMER1_MODE_NORMAL,
-    TIMER1_MODE_CTC_OCR1A,
-    TIMER1_MODE_CTC_ICR1,
-    TIMER1_MODE_FAST_PWM_ICR1,
-    TIMER1_MODE_FAST_PWM_OCR1A,
-    TIMER1_MODE_PHASE_CORRECT_ICR1
+    TIMER1_MODE_NORMAL,             /**< Normal counting mode. */
+    TIMER1_MODE_CTC_OCR1A,          /**< CTC mode with OCR1A as TOP. */
+    TIMER1_MODE_CTC_ICR1,           /**< CTC mode with ICR1 as TOP. */
+    TIMER1_MODE_FAST_PWM_ICR1,      /**< Fast PWM mode with ICR1 as TOP. */
+    TIMER1_MODE_FAST_PWM_OCR1A,     /**< Fast PWM mode with OCR1A as TOP. */
+    TIMER1_MODE_PHASE_CORRECT_ICR1  /**< Phase Correct PWM mode with ICR1 as TOP. */
 } TIMER1_Mode_t;
 
 /**
- * @brief Timer1 Output Compare behavior
+ * @brief Output Compare behavior for Timer1 channels in non-PWM modes.
  */
 typedef enum
 {
-    TIMER1_OC_DISCONNECTED = 0,
-    TIMER1_OC_TOGGLE,
-    TIMER1_OC_CLEAR,
-    TIMER1_OC_SET
+    TIMER1_OC_DISCONNECTED = 0, /**< Disconnect OC1x pin from compare unit. */
+    TIMER1_OC_TOGGLE,           /**< Toggle OC1x pin on compare match. */
+    TIMER1_OC_CLEAR,            /**< Clear OC1x pin on compare match. */
+    TIMER1_OC_SET               /**< Set OC1x pin on compare match. */
 } TIMER1_OC_Mode_t;
 
 /**
- * @brief Timer1 configuration structure
+ * @brief Timer1 configuration structure.
+ *
+ * This structure stores the values that will be written to Timer1 registers.
+ * The meaning of OCR1A and ICR1 depends on the selected Timer1 operating mode.
  */
 typedef struct
 {
-    TIMER1_Mode_t mode;             /**< Timer1 mode */
-    TIMER_Prescaler_t prescaler;    /**< Clock prescaler */
+    TIMER1_Mode_t mode;                  /**< Timer1 operating mode. */
+    TIMER_Prescaler_t prescaler;         /**< Timer1 clock source / prescaler. */
 
-    TIMER1_OC_Mode_t oc1a_mode;     /**< OC1A behavior */
-    TIMER1_OC_Mode_t oc1b_mode;     /**< OC1B behavior */
+    TIMER1_OC_Mode_t oc1a_mode;          /**< OC1A behavior in non-PWM modes. */
+    TIMER1_OC_Mode_t oc1b_mode;          /**< OC1B behavior in non-PWM modes. */
 
-    TIMER_PWM_Mode_t pwm_mode;      /**< PWM type */
+    TIMER_PWM_Mode_t oc1a_pwm_mode;      /**< OC1A behavior in PWM modes. */
+    TIMER_PWM_Mode_t oc1b_pwm_mode;      /**< OC1B behavior in PWM modes. */
 
-    uint16_t initial_value;         /**< TCNT1 (0-65535) */
+    uint16_t initial_value;              /**< Initial value loaded into TCNT1. */
 
-    uint16_t compare_A;             /**< OCR1A */
-    uint16_t compare_B;             /**< OCR1B */
-
-		/**
-	 * @brief TOP value for Timer1
-	 *
-	 * Used as:
-	 * - ICR1 in modes: FAST_PWM_ICR1 / PHASE_CORRECT_ICR1
-	 * - OCR1A in modes: FAST_PWM_OCR1A
-	 */
-	uint16_t top_value;
+    uint16_t ocr1a_value;                /**< Value to be loaded into OCR1A. */
+    uint16_t ocr1b_value;                /**< Value to be loaded into OCR1B. */
+    uint16_t icr1_value;                 /**< Value to be loaded into ICR1. */
 
 } TIMER1_Config_t;
 
+/* ========================================================================== */
+/*                             Interrupt Sources                              */
+/* ========================================================================== */
+
 /**
- * @brief Timer interrupt sources
+ * @brief Timer interrupt source identifiers.
  */
 typedef enum
 {
-    TIMER_INT_OVF,      /**< Overflow interrupt */
-    TIMER_INT_COMP_A,   /**< Compare Match A */
-    TIMER_INT_COMP_B,   /**< Compare Match B */
-    TIMER_INT_ICU       /**< Input Capture Unit */
+    TIMER_INT_OVF,    /**< Overflow interrupt source. */
+    TIMER_INT_COMP_A, /**< Compare Match A interrupt source. */
+    TIMER_INT_COMP_B, /**< Compare Match B interrupt source. */
+    TIMER_INT_ICU     /**< Input Capture Unit interrupt source. */
 } TIMER_InterruptSource_t;
 
-
-/* =========================================================
- *  APIs
- * ========================================================= */
+/* ========================================================================== */
+/*                               Initialization                               */
+/* ========================================================================== */
 
 /**
- * @brief Initialize all timers based on configuration
+ * @brief Initialize all timer modules according to their configuration.
+ *
+ * This function initializes Timer0, Timer1, and Timer2 using the configuration
+ * settings defined in the driver configuration source.
  *
  * @return error_t
+ *         - OK  : All timers initialized successfully.
+ *         - NOK : One or more timers failed to initialize.
  */
 error_t TIMER_Init(void);
 
 /**
- * @brief Initialize Timer0
+ * @brief Initialize Timer0 according to its configuration.
  *
  * @return error_t
+ *         - OK  : Timer0 initialized successfully.
+ *         - NOK : Timer0 initialization failed.
  */
 error_t TIMER0_Init(void);
 
 /**
- * @brief Initialize Timer1
+ * @brief Initialize Timer1 according to its configuration.
  *
  * @return error_t
+ *         - OK  : Timer1 initialized successfully.
+ *         - NOK : Timer1 initialization failed.
  */
 error_t TIMER1_Init(void);
 
 /**
- * @brief Initialize Timer2
+ * @brief Initialize Timer2 according to its configuration.
  *
  * @return error_t
+ *         - OK  : Timer2 initialized successfully.
+ *         - NOK : Timer2 initialization failed.
  */
 error_t TIMER2_Init(void);
-/* =========================
- * Timer0 API
- * ========================= */
+
+/* ========================================================================== */
+/*                                Timer0 API                                  */
+/* ========================================================================== */
 
 /**
- * @brief Set Timer0 counter value (TCNT0)
- * @param[in] value Counter value (0-255)
+ * @brief Set Timer0 counter register value.
+ *
+ * This function writes a value to the TCNT0 register.
+ *
+ * @param[in] value Value to be written to TCNT0.
  */
 void TIMER0_SetCounter(uint8_t value);
 
 /**
- * @brief Get Timer0 counter value (TCNT0)
- * @return Current TCNT0 value
+ * @brief Get Timer0 counter register value.
+ *
+ * This function reads the current value of the TCNT0 register.
+ *
+ * @return uint8_t Current TCNT0 value.
  */
 uint8_t TIMER0_GetCounter(void);
 
 /**
- * @brief Set Timer0 compare value (OCR0)
- * @param[in] value Compare value (0-255)
+ * @brief Set Timer0 compare register value.
+ *
+ * This function writes a value to the OCR0 register.
+ *
+ * @param[in] value Value to be written to OCR0.
  */
 void TIMER0_SetCompare(uint8_t value);
 
 /**
- * @brief Get Timer0 compare value (OCR0)
- * @return Current OCR0 value
+ * @brief Get Timer0 compare register value.
+ *
+ * This function reads the current value of the OCR0 register.
+ *
+ * @return uint8_t Current OCR0 value.
  */
 uint8_t TIMER0_GetCompare(void);
 
-/* =========================
- * Timer1 API
- * ========================= */
+/* ========================================================================== */
+/*                                Timer1 API                                  */
+/* ========================================================================== */
 
 /**
- * @brief Set Timer1 counter value (TCNT1)
- * @param[in] value Counter value (0-65535)
+ * @brief Set Timer1 counter register value.
+ *
+ * This function writes a value to the TCNT1 register.
+ *
+ * @param[in] value Value to be written to TCNT1.
  */
 void TIMER1_SetCounter(uint16_t value);
 
 /**
- * @brief Get Timer1 counter value (TCNT1)
- * @return Current TCNT1 value
+ * @brief Get Timer1 counter register value.
+ *
+ * This function reads the current value of the TCNT1 register.
+ *
+ * @return uint16_t Current TCNT1 value.
  */
 uint16_t TIMER1_GetCounter(void);
 
 /**
- * @brief Set Timer1 Compare A value (OCR1A)
- * @param[in] value Compare value (0-65535)
+ * @brief Set Timer1 Compare A register value.
+ *
+ * This function writes a value to the OCR1A register.
+ *
+ * @param[in] value Value to be written to OCR1A.
  */
 void TIMER1_SetCompareA(uint16_t value);
 
 /**
- * @brief Get Timer1 Compare A value (OCR1A)
- * @return Current OCR1A value
+ * @brief Get Timer1 Compare A register value.
+ *
+ * This function reads the current value of the OCR1A register.
+ *
+ * @return uint16_t Current OCR1A value.
  */
 uint16_t TIMER1_GetCompareA(void);
 
 /**
- * @brief Set Timer1 Compare B value (OCR1B)
- * @param[in] value Compare value (0-65535)
+ * @brief Set Timer1 Compare B register value.
+ *
+ * This function writes a value to the OCR1B register.
+ *
+ * @param[in] value Value to be written to OCR1B.
  */
 void TIMER1_SetCompareB(uint16_t value);
 
 /**
- * @brief Get Timer1 Compare B value (OCR1B)
- * @return Current OCR1B value
+ * @brief Get Timer1 Compare B register value.
+ *
+ * This function reads the current value of the OCR1B register.
+ *
+ * @return uint16_t Current OCR1B value.
  */
 uint16_t TIMER1_GetCompareB(void);
 
 /**
- * @brief Set Timer1 top value (ICR1)
- * @param[in] value Top value (0-65535)
+ * @brief Set Timer1 top value according to the configured mode.
+ *
+ * This function updates the Timer1 top value used by modes that support
+ * a programmable top. The value is written to OCR1A or ICR1 depending
+ * on the current Timer1 mode configuration.
+ *
+ * @param[in] value Top value to be configured.
+ *
+ * @author Abdelrahman Elzayat
  */
 void TIMER1_SetTop(uint16_t value);
 
 /**
- * @brief Get Timer1 top value (ICR1)
- * @return Current ICR1 value
+ * @brief Get Timer1 top value according to the configured mode.
+ *
+ * This function returns the current Timer1 top value from OCR1A or ICR1
+ * depending on the current Timer1 mode configuration.
+ *
+ * @return uint16_t Current Timer1 top value.
+ *
+ * @author Abdelrahman Elzayat
  */
 uint16_t TIMER1_GetTop(void);
 
-/* =========================
- * Timer2 API
- * ========================= */
+/* ========================================================================== */
+/*                                Timer2 API                                  */
+/* ========================================================================== */
 
 /**
- * @brief Set Timer2 counter value (TCNT2)
- * @param[in] value Counter value (0-255)
+ * @brief Set Timer2 counter register value.
+ *
+ * This function writes a value to the TCNT2 register.
+ *
+ * @param[in] value Value to be written to TCNT2.
  */
 void TIMER2_SetCounter(uint8_t value);
 
 /**
- * @brief Get Timer2 counter value (TCNT2)
- * @return Current TCNT2 value
+ * @brief Get Timer2 counter register value.
+ *
+ * This function reads the current value of the TCNT2 register.
+ *
+ * @return uint8_t Current TCNT2 value.
  */
 uint8_t TIMER2_GetCounter(void);
 
 /**
- * @brief Set Timer2 compare value (OCR2)
- * @param[in] value Compare value (0-255)
+ * @brief Set Timer2 compare register value.
+ *
+ * This function writes a value to the OCR2 register.
+ *
+ * @param[in] value Value to be written to OCR2.
  */
 void TIMER2_SetCompare(uint8_t value);
 
 /**
- * @brief Get Timer2 compare value (OCR2)
- * @return Current OCR2 value
+ * @brief Get Timer2 compare register value.
+ *
+ * This function reads the current value of the OCR2 register.
+ *
+ * @return uint8_t Current OCR2 value.
  */
 uint8_t TIMER2_GetCompare(void);
 
+/* ========================================================================== */
+/*                            Timer Control API                               */
+/* ========================================================================== */
+
+/**
+ * @brief Start the selected timer.
+ *
+ * This function starts the specified timer by restoring its configured clock
+ * source and prescaler settings.
+ *
+ * @param[in] timer Timer channel to start.
+ *
+ * @return error_t
+ *         - OK           : Timer started successfully.
+ *         - OUT_OF_RANGE : Invalid timer channel.
+ */
+error_t TIMER_Start(TIMER_Channel_t timer);
+
+/**
+ * @brief Stop the selected timer.
+ *
+ * This function stops the specified timer by clearing its clock select bits,
+ * which disconnects the timer clock source.
+ *
+ * @param[in] timer Timer channel to stop.
+ *
+ * @return error_t
+ *         - OK           : Timer stopped successfully.
+ *         - OUT_OF_RANGE : Invalid timer channel.
+ */
+error_t TIMER_Stop(TIMER_Channel_t timer);
 
 #endif /* TIMER_INT_H_ */

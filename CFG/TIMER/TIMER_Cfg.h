@@ -16,7 +16,7 @@
 
 
 /* =========================================================
- *  External Configuration Structures
+ * ?? External Configuration Structures
  * ========================================================= */
 
 /**
