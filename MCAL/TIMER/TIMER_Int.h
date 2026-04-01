@@ -2,7 +2,7 @@
 #define TIMER_INT_H_
 
 /**
- * @file TIMER_INT.h
+ * @file TIMER_Int.h
  * @author Abdelrahman Elzayat
  * @brief Public interface for the ATmega32 Timer driver.
  *
@@ -27,35 +27,10 @@
  * @note The corresponding GPIO pin must be configured as output before use.
  * @{
  */
-
-/**
- * @brief Timer0 Output Compare pin.
- *
- * This pin is associated with the OC0 signal and is used in CTC and PWM modes.
- */
-#define TIMER0_OC0_PIN   PINB3
-
-/**
- * @brief Timer1 Output Compare A pin.
- *
- * This pin is associated with the OC1A signal and is used in compare and PWM modes.
- */
-#define TIMER1_OC1A_PIN  PIND5
-
-/**
- * @brief Timer1 Output Compare B pin.
- *
- * This pin is associated with the OC1B signal and is used in compare and PWM modes.
- */
-#define TIMER1_OC1B_PIN  PIND4
-
-/**
- * @brief Timer2 Output Compare pin.
- *
- * This pin is associated with the OC2 signal and is used in CTC and PWM modes.
- */
-#define TIMER2_OC2_PIN   PIND7
-
+#define TIMER0_OC0_PIN   PINB3 /**< Timer0 Output Compare pin. */
+#define TIMER1_OC1A_PIN  PIND5 /**< Timer1 Output Compare A pin. */
+#define TIMER1_OC1B_PIN  PIND4 /**< Timer1 Output Compare B pin. */
+#define TIMER2_OC2_PIN   PIND7 /**< Timer2 Output Compare pin. */
 /** @} */
 
 /* ========================================================================== */
@@ -94,8 +69,8 @@ typedef enum
  */
 typedef enum
 {
-    TIMER_PWM_NON_INVERTING, /**< Non-inverting PWM mode. */
-    TIMER_PWM_INVERTING      /**< Inverting PWM mode. */
+    TIMER_PWM_NON_INVERTING = 0, /**< Non-inverting PWM mode. */
+    TIMER_PWM_INVERTING          /**< Inverting PWM mode. */
 } TIMER_PWM_Mode_t;
 
 /**
@@ -118,10 +93,10 @@ typedef enum
  */
 typedef enum
 {
-    TIMER0_MODE_NORMAL,             /**< Normal counting mode. */
-    TIMER0_MODE_CTC,                /**< Clear Timer on Compare Match mode. */
-    TIMER0_MODE_FAST_PWM,           /**< Fast PWM mode. */
-    TIMER0_MODE_PHASE_CORRECT_PWM   /**< Phase Correct PWM mode. */
+    TIMER0_MODE_NORMAL = 0,       /**< Normal counting mode. */
+    TIMER0_MODE_CTC,              /**< Clear Timer on Compare Match mode. */
+    TIMER0_MODE_FAST_PWM,         /**< Fast PWM mode. */
+    TIMER0_MODE_PHASE_CORRECT_PWM /**< Phase Correct PWM mode. */
 } TIMER0_Mode_t;
 
 /**
@@ -134,7 +109,7 @@ typedef struct
     TIMER_OC_Mode_t oc_mode;     /**< Output Compare behavior in Normal/CTC modes. */
     TIMER_PWM_Mode_t pwm_mode;   /**< PWM output behavior in PWM modes. */
     uint8_t initial_value;       /**< Initial value loaded into TCNT0. */
-    uint8_t compare_value;       /**< Compare value loaded into OCR0. */
+    uint8_t compare_value;       /**< Value loaded into OCR0. */
 } TIMER0_Config_t;
 
 /* ========================================================================== */
@@ -146,10 +121,10 @@ typedef struct
  */
 typedef enum
 {
-    TIMER2_MODE_NORMAL,             /**< Normal counting mode. */
-    TIMER2_MODE_CTC,                /**< Clear Timer on Compare Match mode. */
-    TIMER2_MODE_FAST_PWM,           /**< Fast PWM mode. */
-    TIMER2_MODE_PHASE_CORRECT_PWM   /**< Phase Correct PWM mode. */
+    TIMER2_MODE_NORMAL = 0,       /**< Normal counting mode. */
+    TIMER2_MODE_CTC,              /**< Clear Timer on Compare Match mode. */
+    TIMER2_MODE_FAST_PWM,         /**< Fast PWM mode. */
+    TIMER2_MODE_PHASE_CORRECT_PWM /**< Phase Correct PWM mode. */
 } TIMER2_Mode_t;
 
 /**
@@ -162,7 +137,7 @@ typedef struct
     TIMER_OC_Mode_t oc_mode;     /**< Output Compare behavior in Normal/CTC modes. */
     TIMER_PWM_Mode_t pwm_mode;   /**< PWM output behavior in PWM modes. */
     uint8_t initial_value;       /**< Initial value loaded into TCNT2. */
-    uint8_t compare_value;       /**< Compare value loaded into OCR2. */
+    uint8_t compare_value;       /**< Value loaded into OCR2. */
 } TIMER2_Config_t;
 
 /* ========================================================================== */
@@ -174,12 +149,12 @@ typedef struct
  */
 typedef enum
 {
-    TIMER1_MODE_NORMAL,             /**< Normal counting mode. */
-    TIMER1_MODE_CTC_OCR1A,          /**< CTC mode with OCR1A as TOP. */
-    TIMER1_MODE_CTC_ICR1,           /**< CTC mode with ICR1 as TOP. */
-    TIMER1_MODE_FAST_PWM_ICR1,      /**< Fast PWM mode with ICR1 as TOP. */
-    TIMER1_MODE_FAST_PWM_OCR1A,     /**< Fast PWM mode with OCR1A as TOP. */
-    TIMER1_MODE_PHASE_CORRECT_ICR1  /**< Phase Correct PWM mode with ICR1 as TOP. */
+    TIMER1_MODE_NORMAL = 0,    /**< Normal counting mode. */
+    TIMER1_MODE_CTC_OCR1A,     /**< CTC mode with OCR1A as TOP. */
+    TIMER1_MODE_CTC_ICR1,      /**< CTC mode with ICR1 as TOP. */
+    TIMER1_MODE_FAST_PWM_ICR1, /**< Fast PWM mode with ICR1 as TOP. */
+    TIMER1_MODE_FAST_PWM_OCR1A, /**< Fast PWM mode with OCR1A as TOP. */
+    TIMER1_MODE_PHASE_CORRECT_ICR1 /**< Phase Correct PWM mode with ICR1 as TOP. */
 } TIMER1_Mode_t;
 
 /**
@@ -212,10 +187,9 @@ typedef struct
 
     uint16_t initial_value;              /**< Initial value loaded into TCNT1. */
 
-    uint16_t ocr1a_value;                /**< Value to be loaded into OCR1A. */
-    uint16_t ocr1b_value;                /**< Value to be loaded into OCR1B. */
-    uint16_t icr1_value;                 /**< Value to be loaded into ICR1. */
-
+    uint16_t ocr1a_value;                /**< Value loaded into OCR1A. */
+    uint16_t ocr1b_value;                /**< Value loaded into OCR1B. */
+    uint16_t icr1_value;                 /**< Value loaded into ICR1. */
 } TIMER1_Config_t;
 
 /* ========================================================================== */
@@ -227,11 +201,25 @@ typedef struct
  */
 typedef enum
 {
-    TIMER_INT_OVF,    /**< Overflow interrupt source. */
-    TIMER_INT_COMP_A, /**< Compare Match A interrupt source. */
-    TIMER_INT_COMP_B, /**< Compare Match B interrupt source. */
-    TIMER_INT_ICU     /**< Input Capture Unit interrupt source. */
+    TIMER_INT_OVF = 0, /**< Overflow interrupt source. */
+    TIMER_INT_COMP_A,  /**< Compare Match A interrupt source. */
+    TIMER_INT_COMP_B,  /**< Compare Match B interrupt source. */
+    TIMER_INT_ICU      /**< Input Capture Unit interrupt source. */
 } TIMER_InterruptSource_t;
+
+/**
+ * @brief Timer callback function pointer type.
+ */
+typedef void (*TIMER_Callback_t)(void);
+
+/**
+ * @brief Timer1 Input Capture edge selection.
+ */
+typedef enum
+{
+    TIMER1_ICU_FALLING_EDGE = 0, /**< Capture on falling edge. */
+    TIMER1_ICU_RISING_EDGE       /**< Capture on rising edge. */
+} TIMER1_ICU_Edge_t;
 
 /* ========================================================================== */
 /*                               Initialization                               */
@@ -252,27 +240,39 @@ error_t TIMER_Init(void);
 /**
  * @brief Initialize Timer0 according to its configuration.
  *
+ * This function configures Timer0 registers and loads initial values,
+ * but does not start the timer clock. The timer remains stopped until
+ * TIMER_Start() is called.
+ *
  * @return error_t
- *         - OK  : Timer0 initialized successfully.
- *         - NOK : Timer0 initialization failed.
+ *         - OK           : Timer0 initialized successfully.
+ *         - OUT_OF_RANGE : Invalid Timer0 configuration.
  */
 error_t TIMER0_Init(void);
 
 /**
  * @brief Initialize Timer1 according to its configuration.
  *
+ * This function configures Timer1 registers and loads initial values,
+ * but does not start the timer clock. The timer remains stopped until
+ * TIMER_Start() is called.
+ *
  * @return error_t
- *         - OK  : Timer1 initialized successfully.
- *         - NOK : Timer1 initialization failed.
+ *         - OK           : Timer1 initialized successfully.
+ *         - OUT_OF_RANGE : Invalid Timer1 configuration.
  */
 error_t TIMER1_Init(void);
 
 /**
  * @brief Initialize Timer2 according to its configuration.
  *
+ * This function configures Timer2 registers and loads initial values,
+ * but does not start the timer clock. The timer remains stopped until
+ * TIMER_Start() is called.
+ *
  * @return error_t
- *         - OK  : Timer2 initialized successfully.
- *         - NOK : Timer2 initialization failed.
+ *         - OK           : Timer2 initialized successfully.
+ *         - OUT_OF_RANGE : Invalid Timer2 configuration.
  */
 error_t TIMER2_Init(void);
 
@@ -280,68 +280,23 @@ error_t TIMER2_Init(void);
 /*                                Timer0 API                                  */
 /* ========================================================================== */
 
-/**
- * @brief Set Timer0 counter register value.
- *
- * This function writes a value to the TCNT0 register.
- *
- * @param[in] value Value to be written to TCNT0.
- */
 void TIMER0_SetCounter(uint8_t value);
-
-/**
- * @brief Get Timer0 counter register value.
- *
- * This function reads the current value of the TCNT0 register.
- *
- * @return uint8_t Current TCNT0 value.
- */
 uint8_t TIMER0_GetCounter(void);
-
-/**
- * @brief Set Timer0 compare register value.
- *
- * This function writes a value to the OCR0 register.
- *
- * @param[in] value Value to be written to OCR0.
- */
 void TIMER0_SetCompare(uint8_t value);
-
-/**
- * @brief Get Timer0 compare register value.
- *
- * This function reads the current value of the OCR0 register.
- *
- * @return uint8_t Current OCR0 value.
- */
 uint8_t TIMER0_GetCompare(void);
 
 /* ========================================================================== */
 /*                                Timer1 API                                  */
 /* ========================================================================== */
 
-/**
- * @brief Set Timer1 counter register value.
- *
- * This function writes a value to the TCNT1 register.
- *
- * @param[in] value Value to be written to TCNT1.
- */
 void TIMER1_SetCounter(uint16_t value);
-
-/**
- * @brief Get Timer1 counter register value.
- *
- * This function reads the current value of the TCNT1 register.
- *
- * @return uint16_t Current TCNT1 value.
- */
 uint16_t TIMER1_GetCounter(void);
 
 /**
  * @brief Set Timer1 Compare A register value.
  *
- * This function writes a value to the OCR1A register.
+ * @note In TIMER1_MODE_CTC_OCR1A and TIMER1_MODE_FAST_PWM_OCR1A, OCR1A is used
+ *       as TOP. Calling this function in these modes changes the top value.
  *
  * @param[in] value Value to be written to OCR1A.
  */
@@ -350,28 +305,14 @@ void TIMER1_SetCompareA(uint16_t value);
 /**
  * @brief Get Timer1 Compare A register value.
  *
- * This function reads the current value of the OCR1A register.
+ * @note In TIMER1_MODE_CTC_OCR1A and TIMER1_MODE_FAST_PWM_OCR1A, OCR1A is used
+ *       as TOP. The returned value therefore represents the top value.
  *
  * @return uint16_t Current OCR1A value.
  */
 uint16_t TIMER1_GetCompareA(void);
 
-/**
- * @brief Set Timer1 Compare B register value.
- *
- * This function writes a value to the OCR1B register.
- *
- * @param[in] value Value to be written to OCR1B.
- */
 void TIMER1_SetCompareB(uint16_t value);
-
-/**
- * @brief Get Timer1 Compare B register value.
- *
- * This function reads the current value of the OCR1B register.
- *
- * @return uint16_t Current OCR1B value.
- */
 uint16_t TIMER1_GetCompareB(void);
 
 /**
@@ -382,8 +323,6 @@ uint16_t TIMER1_GetCompareB(void);
  * on the current Timer1 mode configuration.
  *
  * @param[in] value Top value to be configured.
- *
- * @author Abdelrahman Elzayat
  */
 void TIMER1_SetTop(uint16_t value);
 
@@ -394,8 +333,6 @@ void TIMER1_SetTop(uint16_t value);
  * depending on the current Timer1 mode configuration.
  *
  * @return uint16_t Current Timer1 top value.
- *
- * @author Abdelrahman Elzayat
  */
 uint16_t TIMER1_GetTop(void);
 
@@ -403,40 +340,9 @@ uint16_t TIMER1_GetTop(void);
 /*                                Timer2 API                                  */
 /* ========================================================================== */
 
-/**
- * @brief Set Timer2 counter register value.
- *
- * This function writes a value to the TCNT2 register.
- *
- * @param[in] value Value to be written to TCNT2.
- */
 void TIMER2_SetCounter(uint8_t value);
-
-/**
- * @brief Get Timer2 counter register value.
- *
- * This function reads the current value of the TCNT2 register.
- *
- * @return uint8_t Current TCNT2 value.
- */
 uint8_t TIMER2_GetCounter(void);
-
-/**
- * @brief Set Timer2 compare register value.
- *
- * This function writes a value to the OCR2 register.
- *
- * @param[in] value Value to be written to OCR2.
- */
 void TIMER2_SetCompare(uint8_t value);
-
-/**
- * @brief Get Timer2 compare register value.
- *
- * This function reads the current value of the OCR2 register.
- *
- * @return uint8_t Current OCR2 value.
- */
 uint8_t TIMER2_GetCompare(void);
 
 /* ========================================================================== */
@@ -470,6 +376,11 @@ error_t TIMER_Start(TIMER_Channel_t timer);
  *         - OUT_OF_RANGE : Invalid timer channel.
  */
 error_t TIMER_Stop(TIMER_Channel_t timer);
+
+/* ========================================================================== */
+/*                           Interrupt Management                             */
+/* ========================================================================== */
+
 /**
  * @brief Enable the specified timer interrupt source.
  *
@@ -483,13 +394,6 @@ error_t TIMER_Stop(TIMER_Channel_t timer);
  *         - OK           : Interrupt enabled successfully.
  *         - OUT_OF_RANGE : Invalid timer channel or unsupported interrupt source
  *                          for the selected timer.
- *
- * @note Supported interrupt sources:
- *       - TIMER0 : TIMER_INT_OVF, TIMER_INT_COMP_A
- *       - TIMER1 : TIMER_INT_OVF, TIMER_INT_COMP_A, TIMER_INT_COMP_B, TIMER_INT_ICU
- *       - TIMER2 : TIMER_INT_OVF, TIMER_INT_COMP_A
- *
- * @author Abdelrahman Elzayat
  */
 error_t TIMER_InterruptEnable(TIMER_Channel_t timer, TIMER_InterruptSource_t source);
 
@@ -506,24 +410,12 @@ error_t TIMER_InterruptEnable(TIMER_Channel_t timer, TIMER_InterruptSource_t sou
  *         - OK           : Interrupt disabled successfully.
  *         - OUT_OF_RANGE : Invalid timer channel or unsupported interrupt source
  *                          for the selected timer.
- *
- * @note Supported interrupt sources:
- *       - TIMER0 : TIMER_INT_OVF, TIMER_INT_COMP_A
- *       - TIMER1 : TIMER_INT_OVF, TIMER_INT_COMP_A, TIMER_INT_COMP_B, TIMER_INT_ICU
- *       - TIMER2 : TIMER_INT_OVF, TIMER_INT_COMP_A
- *
- * @author Abdelrahman Elzayat
  */
 error_t TIMER_InterruptDisable(TIMER_Channel_t timer, TIMER_InterruptSource_t source);
-/**
- * @brief Timer callback function pointer type.
- *
- * This type is used to register user callback functions that will be
- * executed inside timer interrupt service routines.
- *
- * @author Abdelrahman Elzayat
- */
-typedef void (*TIMER_Callback_t)(void);
+
+/* ========================================================================== */
+/*                              Callback API                                  */
+/* ========================================================================== */
 
 /**
  * @brief Register a callback function for the specified timer interrupt source.
@@ -543,20 +435,15 @@ typedef void (*TIMER_Callback_t)(void);
  *
  * @note This function only registers the callback. The corresponding interrupt
  *       must be enabled separately using TIMER_InterruptEnable().
- *
  * @note Global interrupts must also be enabled by the application.
- *
- * @author Abdelrahman Elzayat
  */
-error_t TIMER_SetCallback(TIMER_Channel_t timer, TIMER_InterruptSource_t source,  TIMER_Callback_t Copy_pvCallbackFunc);
-/**
- * @brief Timer1 Input Capture edge selection.
- */
-typedef enum
-{
-	TIMER1_ICU_FALLING_EDGE = 0, /**< Capture on falling edge. */
-	TIMER1_ICU_RISING_EDGE       /**< Capture on rising edge. */
-} TIMER1_ICU_Edge_t;
+error_t TIMER_SetCallback(TIMER_Channel_t timer,
+                          TIMER_InterruptSource_t source,
+                          TIMER_Callback_t Copy_pvCallbackFunc);
+
+/* ========================================================================== */
+/*                               Timer1 ICU API                               */
+/* ========================================================================== */
 
 /**
  * @brief Set Timer1 Input Capture trigger edge.
@@ -569,8 +456,6 @@ typedef enum
  * @return error_t
  *         - OK           : Edge configured successfully.
  *         - OUT_OF_RANGE : Invalid edge selection.
- *
- * @author Abdelrahman Elzayat
  */
 error_t TIMER1_ICU_SetEdge(TIMER1_ICU_Edge_t edge);
 
@@ -581,8 +466,6 @@ error_t TIMER1_ICU_SetEdge(TIMER1_ICU_Edge_t edge);
  * Input Capture event.
  *
  * @return uint16_t Captured Timer1 count value.
- *
- * @author Abdelrahman Elzayat
  */
 uint16_t TIMER1_ICU_GetCaptureValue(void);
 
@@ -592,26 +475,16 @@ uint16_t TIMER1_ICU_GetCaptureValue(void);
  * This function clears the Input Capture flag (ICF1) in TIFR.
  *
  * @note On AVR, the flag is cleared by writing logical one to it.
- *
- * @author Abdelrahman Elzayat
  */
 void TIMER1_ICU_ClearFlag(void);
 
 /**
  * @brief Enable Timer1 Input Capture noise canceler.
- *
- * This function enables the noise canceler for the Timer1 Input Capture unit.
- *
- * @author Abdelrahman Elzayat
  */
 void TIMER1_ICU_EnableNoiseCanceler(void);
 
 /**
  * @brief Disable Timer1 Input Capture noise canceler.
- *
- * This function disables the noise canceler for the Timer1 Input Capture unit.
- *
- * @author Abdelrahman Elzayat
  */
 void TIMER1_ICU_DisableNoiseCanceler(void);
 
