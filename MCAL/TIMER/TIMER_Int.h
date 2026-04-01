@@ -470,5 +470,50 @@ error_t TIMER_Start(TIMER_Channel_t timer);
  *         - OUT_OF_RANGE : Invalid timer channel.
  */
 error_t TIMER_Stop(TIMER_Channel_t timer);
+/**
+ * @brief Enable the specified timer interrupt source.
+ *
+ * This function enables the selected interrupt source for the specified timer
+ * by setting the corresponding interrupt enable bit in TIMSK.
+ *
+ * @param[in] timer  Timer channel to configure.
+ * @param[in] source Interrupt source to enable.
+ *
+ * @return error_t
+ *         - OK           : Interrupt enabled successfully.
+ *         - OUT_OF_RANGE : Invalid timer channel or unsupported interrupt source
+ *                          for the selected timer.
+ *
+ * @note Supported interrupt sources:
+ *       - TIMER0 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *       - TIMER1 : TIMER_INT_OVF, TIMER_INT_COMP_A, TIMER_INT_COMP_B, TIMER_INT_ICU
+ *       - TIMER2 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *
+ * @author Abdelrahman Elzayat
+ */
+error_t TIMER_InterruptEnable(TIMER_Channel_t timer, TIMER_InterruptSource_t source);
+
+/**
+ * @brief Disable the specified timer interrupt source.
+ *
+ * This function disables the selected interrupt source for the specified timer
+ * by clearing the corresponding interrupt enable bit in TIMSK.
+ *
+ * @param[in] timer  Timer channel to configure.
+ * @param[in] source Interrupt source to disable.
+ *
+ * @return error_t
+ *         - OK           : Interrupt disabled successfully.
+ *         - OUT_OF_RANGE : Invalid timer channel or unsupported interrupt source
+ *                          for the selected timer.
+ *
+ * @note Supported interrupt sources:
+ *       - TIMER0 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *       - TIMER1 : TIMER_INT_OVF, TIMER_INT_COMP_A, TIMER_INT_COMP_B, TIMER_INT_ICU
+ *       - TIMER2 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *
+ * @author Abdelrahman Elzayat
+ */
+error_t TIMER_InterruptDisable(TIMER_Channel_t timer, TIMER_InterruptSource_t source);
 
 #endif /* TIMER_INT_H_ */

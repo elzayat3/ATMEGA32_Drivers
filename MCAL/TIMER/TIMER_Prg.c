@@ -461,3 +461,148 @@ error_t TIMER_Stop(TIMER_Channel_t timer)
 
 	return Local_ErrorState;
 }
+error_t TIMER_InterruptEnable(TIMER_Channel_t timer, TIMER_InterruptSource_t source)
+{
+	error_t Local_ErrorState = OK;
+
+	switch (timer)
+	{
+		case TIMER0:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			SET_BIT(TIMSK, TOIE0);
+			break;
+
+			case TIMER_INT_COMP_A:
+			SET_BIT(TIMSK, OCIE0);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER1:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			SET_BIT(TIMSK, TOIE1);
+			break;
+
+			case TIMER_INT_COMP_A:
+			SET_BIT(TIMSK, OCIE1A);
+			break;
+
+			case TIMER_INT_COMP_B:
+			SET_BIT(TIMSK, OCIE1B);
+			break;
+
+			case TIMER_INT_ICU:
+			SET_BIT(TIMSK, TICIE1);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER2:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			SET_BIT(TIMSK, TOIE2);
+			break;
+
+			case TIMER_INT_COMP_A:
+			SET_BIT(TIMSK, OCIE2);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		default:
+		Local_ErrorState = OUT_OF_RANGE;
+		break;
+	}
+
+	return Local_ErrorState;
+}
+
+error_t TIMER_InterruptDisable(TIMER_Channel_t timer, TIMER_InterruptSource_t source)
+{
+	error_t Local_ErrorState = OK;
+
+	switch (timer)
+	{
+		case TIMER0:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			CLR_BIT(TIMSK, TOIE0);
+			break;
+
+			case TIMER_INT_COMP_A:
+			CLR_BIT(TIMSK, OCIE0);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER1:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			CLR_BIT(TIMSK, TOIE1);
+			break;
+
+			case TIMER_INT_COMP_A:
+			CLR_BIT(TIMSK, OCIE1A);
+			break;
+
+			case TIMER_INT_COMP_B:
+			CLR_BIT(TIMSK, OCIE1B);
+			break;
+
+			case TIMER_INT_ICU:
+			CLR_BIT(TIMSK, TICIE1);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER2:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			CLR_BIT(TIMSK, TOIE2);
+			break;
+
+			case TIMER_INT_COMP_A:
+			CLR_BIT(TIMSK, OCIE2);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		default:
+		Local_ErrorState = OUT_OF_RANGE;
+		break;
+	}
+
+	return Local_ErrorState;
+}
