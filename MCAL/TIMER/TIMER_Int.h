@@ -549,5 +549,70 @@ typedef void (*TIMER_Callback_t)(void);
  * @author Abdelrahman Elzayat
  */
 error_t TIMER_SetCallback(TIMER_Channel_t timer, TIMER_InterruptSource_t source,  TIMER_Callback_t Copy_pvCallbackFunc);
+/**
+ * @brief Timer1 Input Capture edge selection.
+ */
+typedef enum
+{
+	TIMER1_ICU_FALLING_EDGE = 0, /**< Capture on falling edge. */
+	TIMER1_ICU_RISING_EDGE       /**< Capture on rising edge. */
+} TIMER1_ICU_Edge_t;
+
+/**
+ * @brief Set Timer1 Input Capture trigger edge.
+ *
+ * This function selects whether Timer1 Input Capture event is triggered
+ * on a rising edge or a falling edge on the ICU pin.
+ *
+ * @param[in] edge Capture trigger edge selection.
+ *
+ * @return error_t
+ *         - OK           : Edge configured successfully.
+ *         - OUT_OF_RANGE : Invalid edge selection.
+ *
+ * @author Abdelrahman Elzayat
+ */
+error_t TIMER1_ICU_SetEdge(TIMER1_ICU_Edge_t edge);
+
+/**
+ * @brief Read the captured Timer1 value.
+ *
+ * This function returns the value latched in ICR1 during the last
+ * Input Capture event.
+ *
+ * @return uint16_t Captured Timer1 count value.
+ *
+ * @author Abdelrahman Elzayat
+ */
+uint16_t TIMER1_ICU_GetCaptureValue(void);
+
+/**
+ * @brief Clear Timer1 Input Capture flag.
+ *
+ * This function clears the Input Capture flag (ICF1) in TIFR.
+ *
+ * @note On AVR, the flag is cleared by writing logical one to it.
+ *
+ * @author Abdelrahman Elzayat
+ */
+void TIMER1_ICU_ClearFlag(void);
+
+/**
+ * @brief Enable Timer1 Input Capture noise canceler.
+ *
+ * This function enables the noise canceler for the Timer1 Input Capture unit.
+ *
+ * @author Abdelrahman Elzayat
+ */
+void TIMER1_ICU_EnableNoiseCanceler(void);
+
+/**
+ * @brief Disable Timer1 Input Capture noise canceler.
+ *
+ * This function disables the noise canceler for the Timer1 Input Capture unit.
+ *
+ * @author Abdelrahman Elzayat
+ */
+void TIMER1_ICU_DisableNoiseCanceler(void);
 
 #endif /* TIMER_INT_H_ */

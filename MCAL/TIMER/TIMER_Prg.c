@@ -688,6 +688,47 @@ error_t TIMER_SetCallback(TIMER_Channel_t timer, TIMER_InterruptSource_t source,
 
 	return Local_ErrorState;
 }
+error_t TIMER1_ICU_SetEdge(TIMER1_ICU_Edge_t edge)
+{
+	error_t Local_ErrorState = OK;
+
+	switch (edge)
+	{
+		case TIMER1_ICU_FALLING_EDGE:
+		CLR_BIT(TCCR1B, ICES1);
+		break;
+
+		case TIMER1_ICU_RISING_EDGE:
+		SET_BIT(TCCR1B, ICES1);
+		break;
+
+		default:
+		Local_ErrorState = OUT_OF_RANGE;
+		break;
+	}
+
+	return Local_ErrorState;
+}
+
+uint16_t TIMER1_ICU_GetCaptureValue(void)
+{
+	return TIMER1_GET_ICR1();
+}
+
+void TIMER1_ICU_ClearFlag(void)
+{
+	TIMER1_CLEAR_ICU_FLAG();
+}
+
+void TIMER1_ICU_EnableNoiseCanceler(void)
+{
+	SET_BIT(TCCR1B, ICNC1);
+}
+
+void TIMER1_ICU_DisableNoiseCanceler(void)
+{
+	CLR_BIT(TCCR1B, ICNC1);
+}
 /* Timer2 Compare Match ISR */
 ISR(TIMER2_COMP_vect)
 {

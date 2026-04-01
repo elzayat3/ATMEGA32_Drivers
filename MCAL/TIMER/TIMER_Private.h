@@ -175,5 +175,11 @@
  * @author Abdelrahman Elzayat
  */
 #define TIMER_CLOCK_SELECT_MASK   ((uint8_t)0x07U)
+/**
+ * @brief Clear Timer1 Input Capture flag.
+ *
+ * @note On AVR, the flag is cleared by writing logical one to ICF1.
+ */
+#define TIMER1_CLEAR_ICU_FLAG()        (SET_BIT(TIFR, ICF1))
 
 #endif /* TIMER_PRIVATE_H_ */
