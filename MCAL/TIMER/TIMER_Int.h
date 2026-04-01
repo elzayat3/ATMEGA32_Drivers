@@ -470,5 +470,84 @@ error_t TIMER_Start(TIMER_Channel_t timer);
  *         - OUT_OF_RANGE : Invalid timer channel.
  */
 error_t TIMER_Stop(TIMER_Channel_t timer);
+/**
+ * @brief Enable the specified timer interrupt source.
+ *
+ * This function enables the selected interrupt source for the specified timer
+ * by setting the corresponding interrupt enable bit in TIMSK.
+ *
+ * @param[in] timer  Timer channel to configure.
+ * @param[in] source Interrupt source to enable.
+ *
+ * @return error_t
+ *         - OK           : Interrupt enabled successfully.
+ *         - OUT_OF_RANGE : Invalid timer channel or unsupported interrupt source
+ *                          for the selected timer.
+ *
+ * @note Supported interrupt sources:
+ *       - TIMER0 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *       - TIMER1 : TIMER_INT_OVF, TIMER_INT_COMP_A, TIMER_INT_COMP_B, TIMER_INT_ICU
+ *       - TIMER2 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *
+ * @author Abdelrahman Elzayat
+ */
+error_t TIMER_InterruptEnable(TIMER_Channel_t timer, TIMER_InterruptSource_t source);
+
+/**
+ * @brief Disable the specified timer interrupt source.
+ *
+ * This function disables the selected interrupt source for the specified timer
+ * by clearing the corresponding interrupt enable bit in TIMSK.
+ *
+ * @param[in] timer  Timer channel to configure.
+ * @param[in] source Interrupt source to disable.
+ *
+ * @return error_t
+ *         - OK           : Interrupt disabled successfully.
+ *         - OUT_OF_RANGE : Invalid timer channel or unsupported interrupt source
+ *                          for the selected timer.
+ *
+ * @note Supported interrupt sources:
+ *       - TIMER0 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *       - TIMER1 : TIMER_INT_OVF, TIMER_INT_COMP_A, TIMER_INT_COMP_B, TIMER_INT_ICU
+ *       - TIMER2 : TIMER_INT_OVF, TIMER_INT_COMP_A
+ *
+ * @author Abdelrahman Elzayat
+ */
+error_t TIMER_InterruptDisable(TIMER_Channel_t timer, TIMER_InterruptSource_t source);
+/**
+ * @brief Timer callback function pointer type.
+ *
+ * This type is used to register user callback functions that will be
+ * executed inside timer interrupt service routines.
+ *
+ * @author Abdelrahman Elzayat
+ */
+typedef void (*TIMER_Callback_t)(void);
+
+/**
+ * @brief Register a callback function for the specified timer interrupt source.
+ *
+ * This function assigns a user callback function to the selected interrupt
+ * source of the specified timer.
+ *
+ * @param[in] timer Timer channel to configure.
+ * @param[in] source Interrupt source associated with the callback.
+ * @param[in] Copy_pvCallbackFunc Pointer to the callback function.
+ *                                Passing NULL clears the registered callback.
+ *
+ * @return error_t
+ *         - OK           : Callback registered successfully.
+ *         - OUT_OF_RANGE : Invalid timer channel or unsupported interrupt source
+ *                          for the selected timer.
+ *
+ * @note This function only registers the callback. The corresponding interrupt
+ *       must be enabled separately using TIMER_InterruptEnable().
+ *
+ * @note Global interrupts must also be enabled by the application.
+ *
+ * @author Abdelrahman Elzayat
+ */
+error_t TIMER_SetCallback(TIMER_Channel_t timer, TIMER_InterruptSource_t source,  TIMER_Callback_t Copy_pvCallbackFunc);
 
 #endif /* TIMER_INT_H_ */

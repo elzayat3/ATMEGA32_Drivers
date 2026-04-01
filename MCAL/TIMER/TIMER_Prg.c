@@ -3,6 +3,16 @@
 #include "TIMER_Private.h"
 #include "TIMER_Int.h"
 #include "TIMER_Cfg.h"
+static TIMER_Callback_t TIMER0_OVF_Callback   = (TIMER_Callback_t)0;
+static TIMER_Callback_t TIMER0_COMP_Callback  = (TIMER_Callback_t)0;
+
+static TIMER_Callback_t TIMER1_OVF_Callback   = (TIMER_Callback_t)0;
+static TIMER_Callback_t TIMER1_COMPA_Callback = (TIMER_Callback_t)0;
+static TIMER_Callback_t TIMER1_COMPB_Callback = (TIMER_Callback_t)0;
+static TIMER_Callback_t TIMER1_ICU_Callback   = (TIMER_Callback_t)0;
+
+static TIMER_Callback_t TIMER2_OVF_Callback   = (TIMER_Callback_t)0;
+static TIMER_Callback_t TIMER2_COMP_Callback  = (TIMER_Callback_t)0;
 
 error_t TIMER_Init(void)
 {
@@ -460,4 +470,324 @@ error_t TIMER_Stop(TIMER_Channel_t timer)
 	}
 
 	return Local_ErrorState;
+}
+error_t TIMER_InterruptEnable(TIMER_Channel_t timer, TIMER_InterruptSource_t source)
+{
+	error_t Local_ErrorState = OK;
+
+	switch (timer)
+	{
+		case TIMER0:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			SET_BIT(TIMSK, TOIE0);
+			break;
+
+			case TIMER_INT_COMP_A:
+			SET_BIT(TIMSK, OCIE0);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER1:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			SET_BIT(TIMSK, TOIE1);
+			break;
+
+			case TIMER_INT_COMP_A:
+			SET_BIT(TIMSK, OCIE1A);
+			break;
+
+			case TIMER_INT_COMP_B:
+			SET_BIT(TIMSK, OCIE1B);
+			break;
+
+			case TIMER_INT_ICU:
+			SET_BIT(TIMSK, TICIE1);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER2:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			SET_BIT(TIMSK, TOIE2);
+			break;
+
+			case TIMER_INT_COMP_A:
+			SET_BIT(TIMSK, OCIE2);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		default:
+		Local_ErrorState = OUT_OF_RANGE;
+		break;
+	}
+
+	return Local_ErrorState;
+}
+
+error_t TIMER_InterruptDisable(TIMER_Channel_t timer, TIMER_InterruptSource_t source)
+{
+	error_t Local_ErrorState = OK;
+
+	switch (timer)
+	{
+		case TIMER0:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			CLR_BIT(TIMSK, TOIE0);
+			break;
+
+			case TIMER_INT_COMP_A:
+			CLR_BIT(TIMSK, OCIE0);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER1:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			CLR_BIT(TIMSK, TOIE1);
+			break;
+
+			case TIMER_INT_COMP_A:
+			CLR_BIT(TIMSK, OCIE1A);
+			break;
+
+			case TIMER_INT_COMP_B:
+			CLR_BIT(TIMSK, OCIE1B);
+			break;
+
+			case TIMER_INT_ICU:
+			CLR_BIT(TIMSK, TICIE1);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER2:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			CLR_BIT(TIMSK, TOIE2);
+			break;
+
+			case TIMER_INT_COMP_A:
+			CLR_BIT(TIMSK, OCIE2);
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		default:
+		Local_ErrorState = OUT_OF_RANGE;
+		break;
+	}
+
+	return Local_ErrorState;
+}
+error_t TIMER_SetCallback(TIMER_Channel_t timer, TIMER_InterruptSource_t source, TIMER_Callback_t Copy_pvCallbackFunc)
+{
+	error_t Local_ErrorState = OK;
+
+	switch (timer)
+	{
+		case TIMER0:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			TIMER0_OVF_Callback = Copy_pvCallbackFunc;
+			break;
+
+			case TIMER_INT_COMP_A:
+			TIMER0_COMP_Callback = Copy_pvCallbackFunc;
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER1:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			TIMER1_OVF_Callback = Copy_pvCallbackFunc;
+			break;
+
+			case TIMER_INT_COMP_A:
+			TIMER1_COMPA_Callback = Copy_pvCallbackFunc;
+			break;
+
+			case TIMER_INT_COMP_B:
+			TIMER1_COMPB_Callback = Copy_pvCallbackFunc;
+			break;
+
+			case TIMER_INT_ICU:
+			TIMER1_ICU_Callback = Copy_pvCallbackFunc;
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		case TIMER2:
+		switch (source)
+		{
+			case TIMER_INT_OVF:
+			TIMER2_OVF_Callback = Copy_pvCallbackFunc;
+			break;
+
+			case TIMER_INT_COMP_A:
+			TIMER2_COMP_Callback = Copy_pvCallbackFunc;
+			break;
+
+			default:
+			Local_ErrorState = OUT_OF_RANGE;
+			break;
+		}
+		break;
+
+		default:
+		Local_ErrorState = OUT_OF_RANGE;
+		break;
+	}
+
+	return Local_ErrorState;
+}
+/* Timer2 Compare Match ISR */
+ISR(TIMER2_COMP_vect)
+{
+	if (TIMER2_COMP_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER2_COMP_Callback();
+	}
+	else
+	{
+		;
+	}
+}
+
+/* Timer2 Overflow ISR */
+ISR(TIMER2_OVF_vect)
+{
+	if (TIMER2_OVF_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER2_OVF_Callback();
+	}
+	else
+	{
+		;
+	}
+}
+
+/* Timer1 Input Capture ISR */
+ISR(TIMER1_ICU_vect)
+{
+	if (TIMER1_ICU_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER1_ICU_Callback();
+	}
+	else
+	{
+		;
+	}
+}
+
+/* Timer1 Compare Match A ISR */
+ISR(TIMER1_OCA_vect)
+{
+	if (TIMER1_COMPA_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER1_COMPA_Callback();
+	}
+	else
+	{
+		;
+	}
+}
+
+/* Timer1 Compare Match B ISR */
+ISR(TIMER1_OCB_vect)
+{
+	if (TIMER1_COMPB_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER1_COMPB_Callback();
+	}
+	else
+	{
+		;
+	}
+}
+
+/* Timer1 Overflow ISR */
+ISR(TIMER1_OVF_vect)
+{
+	if (TIMER1_OVF_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER1_OVF_Callback();
+	}
+	else
+	{
+		;
+	}
+}
+
+/* Timer0 Compare Match ISR */
+ISR(TIMER0_OC_vect)
+{
+	if (TIMER0_COMP_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER0_COMP_Callback();
+	}
+	else
+	{
+		;
+	}
+}
+
+/* Timer0 Overflow ISR */
+ISR(TIMER0_OV_vect)
+{
+	if (TIMER0_OVF_Callback != (TIMER_Callback_t)0)
+	{
+		TIMER0_OVF_Callback();
+	}
+	else
+	{
+		;
+	}
 }
