@@ -228,12 +228,19 @@ typedef enum
 /**
  * @brief Initialize all timer modules according to their configuration.
  *
- * This function initializes Timer0, Timer1, and Timer2 using the configuration
- * settings defined in the driver configuration source.
+ * This function initializes Timer0, Timer1, and Timer2 using the
+ * configuration settings defined in the timer configuration source file.
+ * Each timer initialization routine is executed independently.
  *
  * @return error_t
  *         - OK  : All timers initialized successfully.
  *         - NOK : One or more timers failed to initialize.
+ *
+ * @note This function configures the timer registers and loads initial values,
+ *       but does not start the timers. Timers remain stopped until
+ *       TIMER_Start() is called.
+ *
+ * @author Abdelrahman Elzayat
  */
 error_t TIMER_Init(void);
 

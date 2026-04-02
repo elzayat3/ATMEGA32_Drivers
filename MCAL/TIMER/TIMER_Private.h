@@ -11,6 +11,7 @@
  *
  * @note This file is intended for internal driver use only.
  */
+#include "TIMER_Int.h"
 
 /* ========================================================================== */
 /*                           Timer Counter Registers                          */
@@ -66,5 +67,56 @@
  * @note On AVR, the flag is cleared by writing logical one to ICF1.
  */
 #define TIMER1_CLEAR_ICU_FLAG()        (SET_BIT(TIFR, ICF1))
+/**
+ * @brief Check whether the selected Timer1 mode is a PWM mode.
+ *
+ * This helper function is used internally by the driver to determine
+ * whether the current Timer1 operating mode uses PWM behavior.
+ *
+ * @param[in] mode Timer1 operating mode to be checked.
+ *
+ * @return uint8_t
+ *         - 1U : The selected mode is a PWM mode.
+ *         - 0U : The selected mode is not a PWM mode.
+ *
+ * @note This function is intended for internal driver use only.
+ *
+ * @author Abdelrahman Elzayat
+ */
+static uint8_t TIMER1_IsPwmMode(TIMER1_Mode_t mode);
+/**
+ * @brief Check whether the selected Timer1 mode uses ICR1 as TOP.
+ *
+ * This helper function is used internally by the driver to determine
+ * whether ICR1 acts as the TOP register in the selected Timer1 mode.
+ *
+ * @param[in] mode Timer1 operating mode to be checked.
+ *
+ * @return uint8_t
+ *         - 1U : ICR1 is used as TOP in the selected mode.
+ *         - 0U : ICR1 is not used as TOP in the selected mode.
+ *
+ * @note This function is intended for internal driver use only.
+ *
+ * @author Abdelrahman Elzayat
+ */
+static uint8_t TIMER1_IsTopIcr1Mode(TIMER1_Mode_t mode);
+/**
+ * @brief Check whether the selected Timer1 mode uses OCR1A as TOP.
+ *
+ * This helper function is used internally by the driver to determine
+ * whether OCR1A acts as the TOP register in the selected Timer1 mode.
+ *
+ * @param[in] mode Timer1 operating mode to be checked.
+ *
+ * @return uint8_t
+ *         - 1U : OCR1A is used as TOP in the selected mode.
+ *         - 0U : OCR1A is not used as TOP in the selected mode.
+ *
+ * @note This function is intended for internal driver use only.
+ *
+ * @author Abdelrahman Elzayat
+ */
+static uint8_t TIMER1_IsTopOcr1aMode(TIMER1_Mode_t mode);
 
 #endif /* TIMER_PRIVATE_H_ */
