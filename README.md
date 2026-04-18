@@ -39,10 +39,15 @@ ATMEGA32_Drivers
 │   │   ├── ADC_Private.h
 │   │   └── ADC_Program.c
 │   │
-│   └── EXIU
-│       ├── EXIU_Int.h
-│       ├── EXIU_Private.h
-│       └── EXIU_Program.c
+│   ├── EXIU
+│   │   ├── EXIU_Int.h
+│   │   ├── EXIU_Private.h
+│   │   └── EXIU_Program.c
+│   │
+│   └── TIMER
+│       ├── TIMER_Int.h
+│       ├── TIMER_Private.h
+│       └── TIMER_Program.c
 │
 ├── CFG
 │   ├── DIO
@@ -53,9 +58,13 @@ ATMEGA32_Drivers
 │   │   ├── ADC_Cfg.c
 │   │   └── ADC_Cfg.h
 │   │
-│   └── EXIU
-│       ├── EXIU_Cfg.c
-│       └── EXIU_Cfg.h
+│   ├── EXIU
+│   │   ├── EXIU_Cfg.c
+│   │   └── EXIU_Cfg.h
+│   │
+│   └── TIMER
+│       ├── TIMER_Cfg.c
+│       └── TIMER_Cfg.h
 │
 ├── MemMap.h
 ├── StdTypes.h
@@ -81,13 +90,13 @@ Provides APIs for controlling GPIO pins and ports.
 
 ### Location
 
-```
+```text
 MCAL/DIO
 ```
 
 ### Configuration
 
-```
+```text
 CFG/DIO
 ```
 
@@ -108,13 +117,13 @@ Provides APIs for performing analog-to-digital conversions.
 
 ### Location
 
-```
+```text
 MCAL/ADC
 ```
 
 ### Configuration
 
-```
+```text
 CFG/ADC
 ```
 
@@ -127,12 +136,10 @@ Provides APIs for handling external interrupts **INT0, INT1, INT2**.
 ### Features
 
 * Support for all external interrupts:
-
   * INT0 (PD2)
   * INT1 (PD3)
   * INT2 (PB2)
 * Configurable trigger modes:
-
   * LOW_LEVEL
   * ANY_LOGIC_CHANGE
   * FALLING_EDGE
@@ -144,14 +151,63 @@ Provides APIs for handling external interrupts **INT0, INT1, INT2**.
 
 ### Location
 
-```
+```text
 MCAL/EXIU
 ```
 
 ### Configuration
 
-```
+```text
 CFG/EXIU
+```
+
+---
+
+## 🔹 TIMER Driver
+
+Provides APIs for configuring and controlling the internal timers of ATmega32.
+
+### Features
+
+* Support for all AVR timers:
+  * **Timer0** (8-bit)
+  * **Timer1** (16-bit)
+  * **Timer2** (8-bit)
+
+* Support for multiple operating modes, including:
+  * **Normal Mode**
+  * **CTC Mode**
+  * **Fast PWM Mode**
+  * **Phase Correct PWM Mode**
+
+* Timer1 advanced support for programmable TOP selection using:
+  * **ICR1**
+  * **OCR1A**
+
+* Configurable clock source / prescaler
+* Configurable output compare behavior for:
+  * **OC0**
+  * **OC1A**
+  * **OC1B**
+  * **OC2**
+* Start / Stop control APIs for each timer
+* Access APIs/macros for timer registers such as:
+  * Counter register read/write
+  * Compare register read/write
+  * Timer1 TOP register read/write
+* Modular configuration-based initialization
+* Clean abstraction over timer register manipulation
+
+### Location
+
+```text
+MCAL/TIMER
+```
+
+### Configuration
+
+```text
+CFG/TIMER
 ```
 
 ---
@@ -192,6 +248,25 @@ EXTI_Config_t EXTI_ConfigArr[EXTI_CONFIG_SIZE] =
 };
 ```
 
+Example (TIMER):
+
+```c
+TIMER0_Config_t timer0_cfg =
+{
+    /* user-defined Timer0 mode, prescaler, compare behavior, preload, compare value */
+};
+
+TIMER1_Config_t timer1_cfg =
+{
+    /* user-defined Timer1 mode, prescaler, compare output behavior, initial value, compare values, top value */
+};
+
+TIMER2_Config_t timer2_cfg =
+{
+    /* user-defined Timer2 mode, prescaler, compare behavior, preload, compare value */
+};
+```
+
 ---
 
 # Example Usage (EXTI + DIO)
@@ -227,6 +302,24 @@ int main(void)
 
 ---
 
+# Example Usage (TIMER)
+
+```c
+#include "TIMER_Int.h"
+
+int main(void)
+{
+    TIMER_Init();
+    TIMER_Start(TIMER0);
+
+    while(1)
+    {
+    }
+}
+```
+
+---
+
 # Design Principles
 
 Drivers in this repository follow key embedded software practices:
@@ -247,12 +340,10 @@ Planned drivers to be added:
 * UART Driver
 * SPI Driver
 * I2C (TWI) Driver
-* Timer Driver
-* PWM Driver
 
 ---
 
 # Author
 
-**Abdelrahman Elzayat**
+**Abdelrahman Elzayat**  
 Embedded Systems Developer
