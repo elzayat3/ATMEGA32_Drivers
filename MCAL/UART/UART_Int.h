@@ -199,29 +199,6 @@ error_t UART_SendNoBlock(u8 Copy_u8Data);
 error_t UART_ReceiveNoBlock(u8 *Add_pu8Data);
 
 /**
- * @brief Periodically checks for received data without blocking.
- *
- * This function is useful in polling-based applications.
- *
- * @param[out] Add_pu8Data Pointer to store the received byte.
- *
- * @retval OK    Data received successfully.
- * @retval NOK   No new data is available.
- * @retval NULL  Input pointer is NULL.
- */
-error_t UART_ReceivePeriodic(u8 *Add_pu8Data);
-
-/**
- * @brief Sends a null-terminated string using blocking mode.
- *
- * @param[in] Add_pu8Str Pointer to the string to be transmitted.
- *
- * @retval OK    String transmitted successfully.
- * @retval NULL  Input pointer is NULL.
- */
-error_t UART_SendString(const u8 *Add_pu8Str);
-
-/**
  * @brief Enables UART RX Complete interrupt.
  *
  * @return void
@@ -292,5 +269,44 @@ error_t UART_TX_SetCallBack(UART_Callback_t Add_pfCallBack);
  * @retval NULL  Input pointer is NULL.
  */
 error_t UART_UDRE_SetCallBack(UART_Callback_t Add_pfCallBack);
+/**
+ * @brief Sends one byte directly to the UART data register.
+ *
+ * This function writes the given byte directly to UDR without checking
+ * whether the transmit data register is empty.
+ *
+ * @param[in] Copy_u8Data Byte to be transmitted.
+ *
+ * @return void
+ *
+ * @note This function should only be used when the UART transmitter is
+ *       already ready to accept a new byte.
+ *
+ * @warning This function does not check the UDRE flag before writing.
+ *          Calling it when UDR is not ready may overwrite pending data.
+ *
+ * @warning This function is mainly intended for controlled use cases,
+ *          such as interrupt-driven transmission inside UART_UDRE_vect.
+ */
+void UART_SendDirect(u8 Copy_u8Data);
+
+/**
+ * @brief Receives one byte directly from the UART data register.
+ *
+ * This function reads the received byte directly from UDR without checking
+ * whether new data is available.
+ *
+ * @return u8 Received byte.
+ *
+ * @note This function should only be used when received data is already
+ *       available in the UART receive buffer.
+ *
+ * @warning This function does not check the RXC flag before reading.
+ *          Calling it when no new data is available may return invalid data.
+ *
+ * @warning This function is mainly intended for controlled use cases,
+ *          such as interrupt-driven reception inside UART_RX_vect callback.
+ */
+u8 UART_ReceiveDirect(void);
 
 #endif /* UART_INT_H_ */
