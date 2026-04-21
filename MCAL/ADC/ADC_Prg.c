@@ -4,6 +4,7 @@
 #include "ADC_Private.h"
 #include "ADC_Cfg.h"
 static u8	ConversionFlag;
+static void(*ADC_Fptr)(void)=NULLPTR;
 void ADC_Init(ADC_VREF_t vref,ADC_Prescaler_t scaler)
 {
 	/*vref*/
@@ -33,8 +34,7 @@ void ADC_Init(ADC_VREF_t vref,ADC_Prescaler_t scaler)
 u16 ADC_Read(ADC_Channel_t ch)
 {
 	/*select channel*/
-	ADMUX=ADMUX&0xE0;
-	ADMUX=ADMUX|ch;
+	ADMUX = (ADMUX & 0xE0) | (ch & 0x07);
 	/*start conversion*/
 	SET_BIT(ADCSRA,ADSC);
 	/*wait until conversion end*/
@@ -47,7 +47,7 @@ u16 ADC_ReadVolt(ADC_Channel_t ch)
 {
 	u16 adc=ADC_Read(ch);
 	u16 volt;
-	volt=((u32)5000*adc)/1023;// if 1023 max volt will be 5000 
+	volt=((u32)ADC_REF_MV*adc)/1023;// if 1023 max volt will be 5000
 	return volt;
 }
 void ADC_StartConversion(ADC_Channel_t ch)
@@ -55,8 +55,7 @@ void ADC_StartConversion(ADC_Channel_t ch)
 	if(ConversionFlag==0)
 	{
 		/*select channel*/
-		ADMUX=ADMUX&0xE0;
-		ADMUX=ADMUX|ch;
+		ADMUX = (ADMUX & 0xE0) | (ch & 0x07);
 		/*start conversion*/
 		SET_BIT(ADCSRA,ADSC);
 		ConversionFlag=1;
@@ -93,6 +92,7 @@ void ADC_InterruptEnable(void)
 {
 	SET_BIT(ADCSRA,ADIE);
 }
+
 void ADC_SetCallBack(void (*LocalFptr)(void))
 {
 	ADC_Fptr = LocalFptr;
@@ -104,4 +104,8 @@ ISR(ADC_vect)
 		ADC_Fptr();
 	}
 	ConversionFlag=0;
+}
+void ADC_InterruptDisable(void)
+{
+	CLR_BIT(ADCSRA,ADIE);
 }
