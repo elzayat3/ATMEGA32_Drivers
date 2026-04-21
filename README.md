@@ -44,10 +44,15 @@ ATMEGA32_Drivers
 │   │   ├── EXIU_Private.h
 │   │   └── EXIU_Program.c
 │   │
-│   └── TIMER
-│       ├── TIMER_Int.h
-│       ├── TIMER_Private.h
-│       └── TIMER_Program.c
+│   ├── TIMER
+│   │   ├── TIMER_Int.h
+│   │   ├── TIMER_Private.h
+│   │   └── TIMER_Program.c
+│   │
+│   └── UART
+│       ├── UART_Int.h
+│       ├── UART_Private.h
+│       └── UART_Prg.c
 │
 ├── CFG
 │   ├── DIO
@@ -62,9 +67,13 @@ ATMEGA32_Drivers
 │   │   ├── EXIU_Cfg.c
 │   │   └── EXIU_Cfg.h
 │   │
-│   └── TIMER
-│       ├── TIMER_Cfg.c
-│       └── TIMER_Cfg.h
+│   ├── TIMER
+│   │   ├── TIMER_Cfg.c
+│   │   └── TIMER_Cfg.h
+│   │
+│   └── UART
+│       ├── UART_Cfg.c
+│       └── UART_Cfg.h
 │
 ├── MemMap.h
 ├── StdTypes.h
@@ -212,6 +221,58 @@ CFG/TIMER
 
 ---
 
+## 🔹 UART Driver
+
+Provides APIs for configuring and controlling the USART peripheral of ATmega32.
+
+### Features
+
+* Configuration-based initialization using `UART_Config_t`
+* Configurable UART parameters:
+  * Communication mode
+  * Speed mode
+  * Parity
+  * Stop bits
+  * Character size
+  * Baud rate
+  * TX/RX enable control
+* Blocking byte transmission and reception
+* Non-blocking byte transmission and reception
+* Direct send/receive APIs for controlled interrupt-driven use cases
+* RX, TX, and UDRE interrupt enable/disable APIs
+* Callback registration for:
+  * RX Complete interrupt
+  * TX Complete interrupt
+  * Data Register Empty interrupt
+* ISR-based callback handling for interrupt-driven communication
+
+### Notes
+
+* Current baud-rate enum values are precomputed **UBRR** values for:
+  * **F_CPU = 8 MHz**
+  * **Asynchronous mode**
+  * **Normal speed mode (U2X = 0)**
+* If CPU frequency or speed mode changes, baud-rate values must be recalculated.
+* `UART_SendDirect()` and `UART_ReceiveDirect()` are intended for controlled use cases such as ISR-driven communication.
+* In the current RX interrupt design, the registered RX callback is responsible for reading `UDR`.
+* In the current UDRE interrupt design, the registered callback should either:
+  * write the next byte to `UDR`, or
+  * disable UDRE interrupt when transmission is complete.
+
+### Location
+
+```text
+MCAL/UART
+```
+
+### Configuration
+
+```text
+CFG/UART
+```
+
+---
+
 # Driver Architecture
 
 The drivers follow a layered architecture commonly used in embedded systems:
@@ -264,6 +325,22 @@ TIMER1_Config_t timer1_cfg =
 TIMER2_Config_t timer2_cfg =
 {
     /* user-defined Timer2 mode, prescaler, compare behavior, preload, compare value */
+};
+```
+
+Example (UART):
+
+```c
+const UART_Config_t UART_Config =
+{
+    .mode      = UART_ASYNCHRONOUS_MODE,
+    .speed     = UART_NORMAL_SPEED,
+    .parity    = UART_PARITY_DISABLED,
+    .stop_bits = UART_ONE_STOP_BIT,
+    .char_size = UART_8_BIT_CHAR,
+    .baud_rate = UART_BAUD_9600,
+    .tx_enable = TRUE,
+    .rx_enable = TRUE
 };
 ```
 
@@ -320,6 +397,52 @@ int main(void)
 
 ---
 
+# Example Usage (UART)
+
+```c
+#include "UART_Int.h"
+
+int main(void)
+{
+    UART_Init();
+
+    UART_Send('A');
+
+    while(1)
+    {
+        /* Application loop */
+    }
+}
+```
+
+Example (UART interrupt-driven receive):
+
+```c
+#include "UART_Int.h"
+
+static volatile u8 Global_u8ReceivedData = 0U;
+
+void UART_RxTask(void)
+{
+    Global_u8ReceivedData = UART_ReceiveDirect();
+}
+
+int main(void)
+{
+    UART_Init();
+    UART_RX_SetCallBack(UART_RxTask);
+    UART_RX_InterruptEnable();
+    GLOBAL_ENABLE();
+
+    while(1)
+    {
+        /* Application loop */
+    }
+}
+```
+
+---
+
 # Design Principles
 
 Drivers in this repository follow key embedded software practices:
@@ -337,7 +460,6 @@ Drivers in this repository follow key embedded software practices:
 
 Planned drivers to be added:
 
-* UART Driver
 * SPI Driver
 * I2C (TWI) Driver
 
