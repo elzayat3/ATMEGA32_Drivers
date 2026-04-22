@@ -10,6 +10,7 @@ The project demonstrates structured embedded driver development including:
 * Modular driver architecture
 * Clean and reusable APIs
 * Configuration separation (MCAL / CFG)
+* Service layer support for higher-level communication features
 
 ---
 
@@ -71,9 +72,20 @@ ATMEGA32_Drivers
 │   │   ├── TIMER_Cfg.c
 │   │   └── TIMER_Cfg.h
 │   │
+│   ├── UART
+│   │   ├── UART_Cfg.c
+│   │   └── UART_Cfg.h
+│   │
+│   └── SUART
+│       ├── SUART_Cfg.c
+│       └── SUART_Cfg.h
+│
+├── SERVICE
 │   └── UART
-│       ├── UART_Cfg.c
-│       └── UART_Cfg.h
+│       ├── SUART_Int.h
+│       ├── SUART_Private.h
+│       ├── SUART_Prg.c
+│       └── README.md
 │
 ├── MemMap.h
 ├── StdTypes.h
@@ -273,12 +285,59 @@ CFG/UART
 
 ---
 
+## 🔹 UART Service Layer (SUART)
+
+Provides higher-level UART services built on top of the UART MCAL driver.
+
+### Features
+
+* Asynchronous queued string transmission
+* Asynchronous queued raw string transmission
+* Asynchronous queued string reception using configurable RX terminator
+* Asynchronous queued raw buffer reception using fixed length
+* Support for array-of-pointers queuing in both TX and RX services
+* Configurable TX and RX terminator sequences from configuration files
+* Internal TX queue management using UART UDRE interrupt
+* Internal RX queue management using UART RX interrupt
+* Completion callback support for:
+  * TX queue empty notification
+  * RX request completion notification
+* Separation between:
+  * normal string mode
+  * raw string / raw buffer mode
+
+### Notes
+
+* `SUART_SendStringAsync()` appends the configured TX terminator automatically.
+* `SUART_SendRawStringAsync()` transmits the string exactly as provided.
+* `SUART_ReceiveStringAsync()` receives data until the configured RX terminator is detected, then appends `'\0'`.
+* `SUART_ReceiveRawBufferAsync()` receives an exact number of bytes without adding a null terminator.
+* Queued TX APIs store **pointers only**, so the provided strings must remain valid until transmission is completed.
+* Queued RX APIs require destination buffers to remain valid until reception is completed.
+
+### Location
+
+```text
+SERVICE/UART
+```
+
+### Configuration
+
+```text
+CFG/SUART
+```
+
+---
+
 # Driver Architecture
 
-The drivers follow a layered architecture commonly used in embedded systems:
+The repository follows a layered architecture commonly used in embedded systems:
 
 ```text
 Application Layer
+        │
+        ▼
+   Service Layer
         │
         ▼
     MCAL Drivers
@@ -287,7 +346,7 @@ Application Layer
  Hardware Registers
 ```
 
-Applications interact only with driver APIs while the drivers handle low-level register operations.
+Applications may use either the MCAL APIs directly or higher-level service modules when needed.
 
 ---
 
@@ -297,6 +356,7 @@ Each driver is divided into:
 
 * **MCAL/** → Driver implementation (reusable)
 * **CFG/** → User configuration (project-specific)
+* **SERVICE/** → Higher-level services built on top of MCAL drivers
 
 Example (EXTI):
 
@@ -342,6 +402,19 @@ const UART_Config_t UART_Config =
     .tx_enable = TRUE,
     .rx_enable = TRUE
 };
+```
+
+Example (SUART):
+
+```c
+#define SUART_TX_QUEUE_SIZE      5U
+#define SUART_RX_QUEUE_SIZE      5U
+
+#define SUART_TX_TERMINATOR_LEN  1U
+#define SUART_RX_TERMINATOR_LEN  1U
+
+const u8 SUART_TxTerminator[SUART_TX_TERMINATOR_LEN] = {'\n'};
+const u8 SUART_RxTerminator[SUART_RX_TERMINATOR_LEN] = {'\n'};
 ```
 
 ---
@@ -443,6 +516,66 @@ int main(void)
 
 ---
 
+# Example Usage (SUART)
+
+```c
+#include "UART_Int.h"
+#include "SUART_Int.h"
+
+static u8 Global_u8RxBuffer[20];
+
+void SUART_RxDone(void)
+{
+    /* One RX request completed */
+}
+
+int main(void)
+{
+    UART_Init();
+    SUART_Init();
+
+    SUART_RX_SetCallBack(SUART_RxDone);
+
+    SUART_SendStringAsync((const u8 *)"Hello");
+    SUART_ReceiveStringAsync(Global_u8RxBuffer, sizeof(Global_u8RxBuffer));
+
+    GLOBAL_ENABLE();
+
+    while(1)
+    {
+        /* Application loop */
+    }
+}
+```
+
+Example (SUART queued TX):
+
+```c
+#include "UART_Int.h"
+#include "SUART_Int.h"
+
+static const u8 Msg1[] = "TEMP=25";
+static const u8 Msg2[] = "HUM=70";
+
+int main(void)
+{
+    const u8 *Messages[] = {Msg1, Msg2};
+
+    UART_Init();
+    SUART_Init();
+    GLOBAL_ENABLE();
+
+    SUART_SendStringsAsync(Messages, 2U);
+
+    while(1)
+    {
+        /* Application loop */
+    }
+}
+```
+
+---
+
 # Design Principles
 
 Drivers in this repository follow key embedded software practices:
@@ -450,6 +583,7 @@ Drivers in this repository follow key embedded software practices:
 * Hardware abstraction (no direct register access in application)
 * Modular driver design
 * Separation of configuration and logic
+* Reusable MCAL and service-layer architecture
 * No magic numbers (enums & macros used)
 * Scalable and reusable architecture
 * Consistent coding style across all drivers
