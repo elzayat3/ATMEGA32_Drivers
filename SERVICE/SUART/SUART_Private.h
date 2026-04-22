@@ -5,37 +5,13 @@
  * @file SUART_Private.h
  * @brief Private declarations for the UART service layer on ATmega32.
  *
- * This file contains internal types, helper macros, and internal function
+ * This file contains internal types, state macros, and internal function
  * declarations used only inside the UART service layer implementation.
  *
  * @author Abdelrahman Elzayat
  */
 
 #include "StdTypes.h"
-
-/* =========================================================
- * Internal Request Types
- * ========================================================= */
-
-/**
- * @enum SUART_TxMode_t
- * @brief Internal TX request mode.
- */
-typedef enum
-{
-	SUART_TX_NORMAL = 0, /**< Send string and append configured TX terminator */
-	SUART_TX_RAW         /**< Send raw string without TX terminator */
-} SUART_TxMode_t;
-
-/**
- * @enum SUART_RxMode_t
- * @brief Internal RX request mode.
- */
-typedef enum
-{
-	SUART_RX_STRING = 0, /**< Receive until configured RX terminator */
-	SUART_RX_RAW         /**< Receive fixed-length raw buffer */
-} SUART_RxMode_t;
 
 /* =========================================================
  * Internal Queue Entry Types
@@ -47,8 +23,8 @@ typedef enum
  */
 typedef struct
 {
-	const u8 *Str;         /**< Pointer to source string */
-	SUART_TxMode_t Mode;   /**< TX mode: normal or raw */
+	const u8 *Data; /**< Pointer to source data buffer */
+	u16 Length;     /**< Number of bytes to transmit */
 } SUART_TxRequest_t;
 
 /**
@@ -57,9 +33,8 @@ typedef struct
  */
 typedef struct
 {
-	u8 *Buffer;            /**< Pointer to destination buffer */
-	u16 Length;            /**< Buffer size or raw receive length */
-	SUART_RxMode_t Mode;   /**< RX mode: string or raw */
+	u8 *Buffer; /**< Pointer to destination buffer */
+	u16 Length; /**< Number of bytes to receive */
 } SUART_RxRequest_t;
 
 /* =========================================================
@@ -70,13 +45,13 @@ typedef struct
  * @def SUART_IDLE
  * @brief Internal state value indicating idle service.
  */
-#define SUART_IDLE      0U
+#define SUART_IDLE    0U
 
 /**
  * @def SUART_BUSY
  * @brief Internal state value indicating active service.
  */
-#define SUART_BUSY      1U
+#define SUART_BUSY    1U
 
 /* =========================================================
  * Internal Function Prototypes
