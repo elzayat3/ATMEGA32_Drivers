@@ -287,33 +287,31 @@ CFG/UART
 
 ## 🔹 UART Service Layer (SUART)
 
-Provides higher-level UART services built on top of the UART MCAL driver.
+Provides higher-level asynchronous UART services built on top of the UART MCAL driver.
 
 ### Features
 
-* Asynchronous queued string transmission
-* Asynchronous queued raw string transmission
-* Asynchronous queued string reception using configurable RX terminator
-* Asynchronous queued raw buffer reception using fixed length
-* Support for array-of-pointers queuing in both TX and RX services
-* Configurable TX and RX terminator sequences from configuration files
+* Asynchronous queued buffer transmission
+* Asynchronous queued buffer reception
+* Support for multiple queued TX requests
+* Support for multiple queued RX requests
+* Exact TX length control
+* Exact RX length control
 * Internal TX queue management using UART UDRE interrupt
 * Internal RX queue management using UART RX interrupt
-* Completion callback support for:
-  * TX queue empty notification
-  * RX request completion notification
-* Separation between:
-  * normal string mode
-  * raw string / raw buffer mode
+* TX queue empty notification callback
+* RX request completion notification callback
+* No extra bytes appended during transmission
+* No terminator-based reception logic
 
 ### Notes
 
-* `SUART_SendStringAsync()` appends the configured TX terminator automatically.
-* `SUART_SendRawStringAsync()` transmits the string exactly as provided.
-* `SUART_ReceiveStringAsync()` receives data until the configured RX terminator is detected, then appends `'\0'`.
-* `SUART_ReceiveRawBufferAsync()` receives an exact number of bytes without adding a null terminator.
-* Queued TX APIs store **pointers only**, so the provided strings must remain valid until transmission is completed.
-* Queued RX APIs require destination buffers to remain valid until reception is completed.
+* `SUART_SendAsync()` transmits exactly the number of bytes specified by the user.
+* `SUART_ReceiveAsync()` receives exactly the number of bytes specified by the user.
+* `SUART_SendBuffersAsync()` and `SUART_ReceiveBuffersAsync()` support queuing multiple buffer requests.
+* TX APIs store **buffer pointers only**, so source data must remain valid until transmission is completed.
+* RX APIs store **destination buffer pointers only**, so destination buffers must remain valid until reception is completed.
+* If RX interrupt occurs with no active or queued RX request, the received byte is discarded and RX interrupt is disabled.
 
 ### Location
 
@@ -407,14 +405,8 @@ const UART_Config_t UART_Config =
 Example (SUART):
 
 ```c
-#define SUART_TX_QUEUE_SIZE      5U
-#define SUART_RX_QUEUE_SIZE      5U
-
-#define SUART_TX_TERMINATOR_LEN  1U
-#define SUART_RX_TERMINATOR_LEN  1U
-
-const u8 SUART_TxTerminator[SUART_TX_TERMINATOR_LEN] = {'\n'};
-const u8 SUART_RxTerminator[SUART_RX_TERMINATOR_LEN] = {'\n'};
+#define SUART_TX_QUEUE_SIZE    5U
+#define SUART_RX_QUEUE_SIZE    5U
 ```
 
 ---
@@ -522,9 +514,10 @@ int main(void)
 #include "UART_Int.h"
 #include "SUART_Int.h"
 
-static u8 Global_u8RxBuffer[20];
+static const u8 TxData[] = {'H', 'E', 'L', 'L', 'O'};
+static u8 RxBuffer[8];
 
-void SUART_RxDone(void)
+void RxDone(void)
 {
     /* One RX request completed */
 }
@@ -533,13 +526,11 @@ int main(void)
 {
     UART_Init();
     SUART_Init();
-
-    SUART_RX_SetCallBack(SUART_RxDone);
-
-    SUART_SendStringAsync((const u8 *)"Hello");
-    SUART_ReceiveStringAsync(Global_u8RxBuffer, sizeof(Global_u8RxBuffer));
-
+    SUART_RX_SetCallBack(RxDone);
     GLOBAL_ENABLE();
+
+    SUART_SendAsync(TxData, 5U);
+    SUART_ReceiveAsync(RxBuffer, 8U);
 
     while(1)
     {
@@ -548,24 +539,31 @@ int main(void)
 }
 ```
 
-Example (SUART queued TX):
+Example (SUART queued buffers):
 
 ```c
 #include "UART_Int.h"
 #include "SUART_Int.h"
 
-static const u8 Msg1[] = "TEMP=25";
-static const u8 Msg2[] = "HUM=70";
+static const u8 Buf1[] = {'A', 'B', 'C'};
+static const u8 Buf2[] = {'1', '2', '3', '4'};
+static u8 RxBuf1[4];
+static u8 RxBuf2[6];
 
 int main(void)
 {
-    const u8 *Messages[] = {Msg1, Msg2};
+    const u8 *TxBuffers[] = {Buf1, Buf2};
+    const u16 TxLengths[] = {3U, 4U};
+
+    u8 *RxBuffers[] = {RxBuf1, RxBuf2};
+    const u16 RxLengths[] = {4U, 6U};
 
     UART_Init();
     SUART_Init();
     GLOBAL_ENABLE();
 
-    SUART_SendStringsAsync(Messages, 2U);
+    SUART_SendBuffersAsync(TxBuffers, TxLengths, 2U);
+    SUART_ReceiveBuffersAsync(RxBuffers, RxLengths, 2U);
 
     while(1)
     {
