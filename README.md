@@ -81,7 +81,7 @@ ATMEGA32_Drivers
 │       └── SUART_Cfg.h
 │
 ├── SERVICE
-│   └── UART
+│   └── SUART
 │       ├── SUART_Int.h
 │       ├── SUART_Private.h
 │       ├── SUART_Prg.c
@@ -287,31 +287,27 @@ CFG/UART
 
 ## 🔹 UART Service Layer (SUART)
 
-Provides higher-level asynchronous UART services built on top of the UART MCAL driver.
+Provides a lightweight higher-level UART service built on top of the UART MCAL driver.
 
 ### Features
 
-* Asynchronous queued buffer transmission
-* Asynchronous queued buffer reception
-* Support for multiple queued TX requests
-* Support for multiple queued RX requests
-* Exact TX length control
-* Exact RX length control
-* Internal TX queue management using UART UDRE interrupt
-* Internal RX queue management using UART RX interrupt
-* TX queue empty notification callback
-* RX request completion notification callback
-* No extra bytes appended during transmission
-* No terminator-based reception logic
+* Asynchronous transmission of **null-terminated strings**
+* FIFO **TX queue** for multiple pending string requests
+* Interrupt-driven TX using **UART UDRE interrupt**
+* Asynchronous reception into a **user-provided buffer**
+* Fixed-capacity RX request model
+* RX completion and TX completion callbacks
+* Simple API focused on practical application use
 
 ### Notes
 
-* `SUART_SendAsync()` transmits exactly the number of bytes specified by the user.
-* `SUART_ReceiveAsync()` receives exactly the number of bytes specified by the user.
-* `SUART_SendBuffersAsync()` and `SUART_ReceiveBuffersAsync()` support queuing multiple buffer requests.
-* TX APIs store **buffer pointers only**, so source data must remain valid until transmission is completed.
-* RX APIs store **destination buffer pointers only**, so destination buffers must remain valid until reception is completed.
-* If RX interrupt occurs with no active or queued RX request, the received byte is discarded and RX interrupt is disabled.
+* `SUART_SendAsync()` accepts a pointer to a null-terminated string.
+* TX queue stores **string pointers only**, so the source string must remain valid until transmission is completed.
+* `SUART_ReceiveAsync()` takes a buffer pointer and the **total buffer size**.
+* RX reserves the **last byte** of the buffer for `\0`.
+* Therefore, if the buffer size is `N`, the number of received characters is `N - 1`.
+* Only **one RX request** can be active at a time.
+* If an RX request is already active, `SUART_ReceiveAsync()` returns `IN_PROGRESS`.
 
 ### Location
 
@@ -406,7 +402,6 @@ Example (SUART):
 
 ```c
 #define SUART_TX_QUEUE_SIZE    5U
-#define SUART_RX_QUEUE_SIZE    5U
 ```
 
 ---
@@ -514,23 +509,33 @@ int main(void)
 #include "UART_Int.h"
 #include "SUART_Int.h"
 
-static const u8 TxData[] = {'H', 'E', 'L', 'L', 'O'};
-static u8 RxBuffer[8];
+static const c8 Msg1[] = "HELLO";
+static const c8 Msg2[] = "DONE";
+static c8 RxBuffer[8];
+
+void TxDone(void)
+{
+    /* One queued string finished transmission */
+}
 
 void RxDone(void)
 {
-    /* One RX request completed */
+    /* RX request completed */
 }
 
 int main(void)
 {
     UART_Init();
     SUART_Init();
+
+    SUART_TX_SetCallBack(TxDone);
     SUART_RX_SetCallBack(RxDone);
+
     GLOBAL_ENABLE();
 
-    SUART_SendAsync(TxData, 5U);
-    SUART_ReceiveAsync(RxBuffer, 8U);
+    SUART_SendAsync(Msg1);
+    SUART_SendAsync(Msg2);
+    SUART_ReceiveAsync(RxBuffer, sizeof(RxBuffer));
 
     while(1)
     {
@@ -539,38 +544,10 @@ int main(void)
 }
 ```
 
-Example (SUART queued buffers):
+In this example:
 
-```c
-#include "UART_Int.h"
-#include "SUART_Int.h"
-
-static const u8 Buf1[] = {'A', 'B', 'C'};
-static const u8 Buf2[] = {'1', '2', '3', '4'};
-static u8 RxBuf1[4];
-static u8 RxBuf2[6];
-
-int main(void)
-{
-    const u8 *TxBuffers[] = {Buf1, Buf2};
-    const u16 TxLengths[] = {3U, 4U};
-
-    u8 *RxBuffers[] = {RxBuf1, RxBuf2};
-    const u16 RxLengths[] = {4U, 6U};
-
-    UART_Init();
-    SUART_Init();
-    GLOBAL_ENABLE();
-
-    SUART_SendBuffersAsync(TxBuffers, TxLengths, 2U);
-    SUART_ReceiveBuffersAsync(RxBuffers, RxLengths, 2U);
-
-    while(1)
-    {
-        /* Application loop */
-    }
-}
-```
+* `Msg1` and `Msg2` are queued and transmitted in order.
+* `RxBuffer` has total size `8`, so SUART receives **7 characters** and reserves the last byte for `\0`.
 
 ---
 
