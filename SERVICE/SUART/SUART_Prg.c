@@ -4,575 +4,242 @@
 #include "SUART_Private.h"
 #include "SUART_Cfg.h"
 
+static error_t TX_INQ(const c8 *str);
+static error_t TX_DEQ(const c8 **str);
+static void SUART_TxISR(void);
+static void SUART_RxISR(void);
 
-static SUART_TxRequest_t SUART_TxQueue[SUART_TX_QUEUE_SIZE];
-static SUART_RxRequest_t SUART_RxQueue[SUART_RX_QUEUE_SIZE];
 
-static const u8 *SUART_pu8CurrentTxData = NULLPTR;
-static u16 SUART_u16CurrentTxLength = 0U;
-static u16 SUART_u16CurrentTxIndex  = 0U;
-static u8 SUART_u8TxHead            = 0U;
-static u8 SUART_u8TxTail            = 0U;
-static u8 SUART_u8TxCount           = 0U;
-static u8 SUART_u8TxState           = SUART_IDLE;
+static const c8*TX_QUEUE[SUART_TX_QUEUE_SIZE]={NULLPTR};
+static c8 *RX_Buffer = NULLPTR;
+	
+static volatile u8 TX_OUT=0;
+static volatile u8 TX_IN=0;
+static volatile u8 TX_Count=0;
+static const c8 * TX_Str = NULLPTR;
 
-static u8 *SUART_pu8CurrentRxBuffer = NULLPTR;
-static u16 SUART_u16CurrentRxLength = 0U;
-static u16 SUART_u16CurrentRxIndex  = 0U;
-static u8 SUART_u8RxHead            = 0U;
-static u8 SUART_u8RxTail            = 0U;
-static u8 SUART_u8RxCount           = 0U;
-static u8 SUART_u8RxState           = SUART_IDLE;
+
+static u8 volatile RX_index=0;
+static u8 volatile RX_Size=0;
+static volatile u8  RX_Busy=0;
 
 static SUART_Callback_t SUART_TX_Fptr = NULLPTR;
 static SUART_Callback_t SUART_RX_Fptr = NULLPTR;
 
-/**
- * @brief Internal UART TX empty callback handler used by the service layer.
- *
- * @return void
- */
-static void SUART_TxHandler(void)
+
+static error_t TX_INQ(const c8*str)
 {
-	/* Load a new TX request if there is no active one */
-	if (SUART_pu8CurrentTxData == NULLPTR)
+	error_t status =OK; 
+	if(TX_IN >= SUART_TX_QUEUE_SIZE )
 	{
-		/* Check if there are queued TX requests */
-		if (SUART_u8TxCount > 0U)
+		TX_IN=0;
+	}
+	else{;}
+		
+	if(str == NULLPTR)
+	{
+		status =NULL_PTR;
+	}
+	else if(TX_Count >= SUART_TX_QUEUE_SIZE)
+	{
+		status=FULL;
+	}
+	else
+	{
+		TX_QUEUE[TX_IN]=str;
+		TX_IN++;
+		TX_Count++;
+	}
+	
+	return status;
+}
+static error_t TX_DEQ(const c8**str)
+{
+	error_t state=OK;
+	if(TX_OUT >= SUART_TX_QUEUE_SIZE)
+	{
+		TX_OUT=0;
+	}
+	else{;}
+		
+	if( str == NULLPTR )
+	{
+		state=NULL_PTR;
+	}	
+	else if(TX_Count == 0)
+	{
+		state=EMPTY;
+	}
+	else
+	{
+		*str=TX_QUEUE[TX_OUT];
+		TX_QUEUE[TX_OUT] = NULLPTR;
+		TX_OUT++;
+		TX_Count--;
+		
+	}
+	return state;
+}
+
+static void SUART_TxISR(void)
+{
+	static u8 TX_index=0;
+	static u8 flag=0;
+	static error_t state =OK;
+	if(flag == 0)
+	{
+		state = TX_DEQ(&TX_Str);
+		flag=1; 
+	} 
+	else{;}
+	if(state == OK)
+	{
+		if(TX_Str[TX_index] != 0)
 		{
-			/* Load the next TX request from the queue */
-			SUART_pu8CurrentTxData = SUART_TxQueue[SUART_u8TxHead].Data;
-			SUART_u16CurrentTxLength = SUART_TxQueue[SUART_u8TxHead].Length;
-			SUART_u16CurrentTxIndex = 0U;
-
-			/* Move head to the next queue slot */
-			SUART_u8TxHead++;
-			if (SUART_u8TxHead >= SUART_TX_QUEUE_SIZE)
-			{
-				SUART_u8TxHead = 0U;
-			}
-			else
-			{
-				;
-			}
-
-			/* Decrease number of queued TX requests */
-			SUART_u8TxCount--;
+			UART_SendDirect(TX_Str[TX_index]);
+			TX_index++;
 		}
 		else
 		{
-			/* No more TX requests, stop transmission */
-			UART_UDRE_InterruptDisable();
-			SUART_u8TxState = SUART_IDLE;
-
-			/* Notify user that TX queue became empty */
+			TX_index=0;
+			flag=0;
 			if (SUART_TX_Fptr != NULLPTR)
 			{
 				SUART_TX_Fptr();
 			}
-			else
-			{
-				;
-			}
+			else{;}
 		}
+		
 	}
 	else
 	{
-		;
+		flag=0;
+		TX_index = 0U;
+		TX_Str = NULLPTR;
+		UART_UDRE_InterruptDisable();
 	}
-
-	/* Process current TX request if available */
-	if (SUART_pu8CurrentTxData != NULLPTR)
-	{
-		/* Send next byte from current TX buffer */
-		if (SUART_u16CurrentTxIndex < SUART_u16CurrentTxLength)
-		{
-			UART_SendDirect(SUART_pu8CurrentTxData[SUART_u16CurrentTxIndex]);
-			SUART_u16CurrentTxIndex++;
-		}
-		else
-		{
-			/* Current TX request finished */
-			SUART_pu8CurrentTxData = NULLPTR;
-			SUART_u16CurrentTxLength = 0U;
-			SUART_u16CurrentTxIndex = 0U;
-		}
-	}
-	else
-	{
-		;
-	}
+	
 }
-
-/**
- * @brief Internal UART RX callback handler used by the service layer.
- *
- * @return void
- */
-static void SUART_RxHandler(void)
+static void SUART_RxISR(void)
 {
-	u8 Local_u8ReceivedData = 0U; /* Holds received byte from UART */
-
-	/* Load a new RX request if there is no active one */
-	if (SUART_pu8CurrentRxBuffer == NULLPTR)
+	RX_Buffer[RX_index++]=UART_ReceiveDirect();
+	if(RX_index>=RX_Size)
 	{
-		/* Check if there are queued RX requests */
-		if (SUART_u8RxCount > 0U)
+		UART_RX_InterruptDisable();
+		RX_Busy=0U;
+		RX_index = 0U;
+		if (SUART_RX_Fptr != NULLPTR)
 		{
-			/* Load the next RX request from the queue */
-			SUART_pu8CurrentRxBuffer = SUART_RxQueue[SUART_u8RxHead].Buffer;
-			SUART_u16CurrentRxLength = SUART_RxQueue[SUART_u8RxHead].Length;
-			SUART_u16CurrentRxIndex  = 0U;
-
-			/* Move head to the next queue slot */
-			SUART_u8RxHead++;
-			if (SUART_u8RxHead >= SUART_RX_QUEUE_SIZE)
-			{
-				SUART_u8RxHead = 0U;
-			}
-			else
-			{
-				;
-			}
-
-			/* Decrease number of queued RX requests */
-			SUART_u8RxCount--;
+			SUART_RX_Fptr();
 		}
-		else
-		{
-			/* Read and discard unexpected received byte */
-			(void)UART_ReceiveDirect();
-
-			/* No more RX requests, stop reception */
-			UART_RX_InterruptDisable();
-			SUART_u8RxState = SUART_IDLE;
-		}
+		else{;}
+		RX_Buffer = NULLPTR;
 	}
-	else
-	{
-		;
-	}
-
-	/* Read UART data only if there is an active RX request */
-	if (SUART_pu8CurrentRxBuffer != NULLPTR)
-	{
-		/* Read received byte directly from UART */
-		Local_u8ReceivedData = UART_ReceiveDirect();
-
-		/* Store received byte if there is still space */
-		if (SUART_u16CurrentRxIndex < SUART_u16CurrentRxLength)
-		{
-			SUART_pu8CurrentRxBuffer[SUART_u16CurrentRxIndex] = Local_u8ReceivedData;
-			SUART_u16CurrentRxIndex++;
-
-			/* Check if current RX request is complete */
-			if (SUART_u16CurrentRxIndex >= SUART_u16CurrentRxLength)
-			{
-				/* Release current RX request */
-				SUART_pu8CurrentRxBuffer = NULLPTR;
-				SUART_u16CurrentRxLength = 0U;
-				SUART_u16CurrentRxIndex  = 0U;
-
-				/* Notify user that one RX request is completed */
-				if (SUART_RX_Fptr != NULLPTR)
-				{
-					SUART_RX_Fptr();
-				}
-				else
-				{
-					;
-				}
-			}
-			else
-			{
-				;
-			}
-		}
-		else
-		{
-			/* Invalid state, release current RX request */
-			SUART_pu8CurrentRxBuffer = NULLPTR;
-			SUART_u16CurrentRxLength = 0U;
-			SUART_u16CurrentRxIndex  = 0U;
-		}
-	}
-	else
-	{
-		;
-	}
+	else{;}
+	
 }
-
 
 error_t SUART_Init(void)
 {
-	error_t Local_ErrorState = OK;  /* Final function status */
-	error_t Local_TxCbState  = OK;  /* Status of linking TX handler */
-	error_t Local_RxCbState  = OK;  /* Status of linking RX handler */
-	u8 Local_u8Index         = 0U;  /* Loop counter */
-
-	/* Reset TX queue entries */
-	for (Local_u8Index = 0U; Local_u8Index < SUART_TX_QUEUE_SIZE; Local_u8Index++)
+	error_t Error_State = OK;  /* Final function status */
+	
+	/* Link lightweight ISR callbacks with UART MCAL */
+	if (UART_UDRE_SetCallBack(SUART_TxISR) != OK)
 	{
-		SUART_TxQueue[Local_u8Index].Data   = NULLPTR;
-		SUART_TxQueue[Local_u8Index].Length = 0U;
+		Error_State = NOK;
 	}
-
-	/* Reset TX runtime state */
-	SUART_pu8CurrentTxData = NULLPTR;
-	SUART_u16CurrentTxLength = 0U;
-	SUART_u16CurrentTxIndex = 0U;
-	SUART_u8TxHead = 0U;
-	SUART_u8TxTail = 0U;
-	SUART_u8TxCount = 0U;
-	SUART_u8TxState = SUART_IDLE;
-	SUART_TX_Fptr = NULLPTR;
-
-	/* Reset RX queue entries */
-	for (Local_u8Index = 0U; Local_u8Index < SUART_RX_QUEUE_SIZE; Local_u8Index++)
+	else if (UART_RX_SetCallBack(SUART_RxISR) != OK)
 	{
-		SUART_RxQueue[Local_u8Index].Buffer = NULLPTR;
-		SUART_RxQueue[Local_u8Index].Length = 0U;
-	}
-
-	/* Reset RX runtime state */
-	SUART_pu8CurrentRxBuffer = NULLPTR;
-	SUART_u16CurrentRxLength = 0U;
-	SUART_u16CurrentRxIndex = 0U;
-	SUART_u8RxHead = 0U;
-	SUART_u8RxTail = 0U;
-	SUART_u8RxCount = 0U;
-	SUART_u8RxState = SUART_IDLE;
-	SUART_RX_Fptr = NULLPTR;
-
-	/* Link service handlers with UART MCAL callbacks */
-	Local_TxCbState = UART_UDRE_SetCallBack(SUART_TxHandler);
-	Local_RxCbState = UART_RX_SetCallBack(SUART_RxHandler);
-
-	/* Check callback registration result */
-	if ((Local_TxCbState != OK) || (Local_RxCbState != OK))
-	{
-		Local_ErrorState = NOK;
+		Error_State = NOK;
 	}
 	else
 	{
-		/* Keep service-controlled interrupts disabled until needed */
+		/* Do nothing */
+	}
+
+	/* Keep UART interrupts disabled until the service needs them */
+	UART_RX_InterruptDisable();
+	UART_UDRE_InterruptDisable();
+
+	return Error_State;
+}
+
+error_t SUART_SendAsync(const c8 *Data)
+{
+	error_t State =OK;
+	if(Data == NULLPTR)
+	{
+		State=NULL_PTR;
+	}
+	else if (Data[0] == '\0')
+	{
+		State = NOK;
+	}
+	else
+	{
 		UART_UDRE_InterruptDisable();
-		UART_RX_InterruptDisable();
+		State = TX_INQ(Data);
+		if( (State == OK) || (State == FULL))
+		{
+			UART_UDRE_InterruptEnable();
+		}
+		else{;}
 	}
-
-	return Local_ErrorState;
+	return State;
 }
-
-error_t SUART_SendAsync(const u8 *Add_pu8Data, u16 Copy_u16Length)
-{
-	error_t Local_ErrorState = OK; /* Final function status */
-
-	/* Check input pointer validity */
-	if (Add_pu8Data == NULLPTR)
-	{
-		Local_ErrorState = NULL_PTR;
-	}
-	/* Check length validity */
-	else if (Copy_u16Length == 0U)
-	{
-		Local_ErrorState = OUT_OF_RANGE;
-	}
-	else
-	{
-		/* Check if TX queue has free space */
-		if (SUART_u8TxCount < SUART_TX_QUEUE_SIZE)
-		{
-			/* Store the TX request in the queue */
-			SUART_TxQueue[SUART_u8TxTail].Data   = Add_pu8Data;
-			SUART_TxQueue[SUART_u8TxTail].Length = Copy_u16Length;
-
-			/* Move tail to the next queue slot */
-			SUART_u8TxTail++;
-			if (SUART_u8TxTail >= SUART_TX_QUEUE_SIZE)
-			{
-				SUART_u8TxTail = 0U;
-			}
-			else
-			{
-				;
-			}
-
-			/* Increase number of queued TX requests */
-			SUART_u8TxCount++;
-
-			/* Start transmission if the service is currently idle */
-			if (SUART_u8TxState == SUART_IDLE)
-			{
-				SUART_u8TxState = SUART_BUSY;
-				UART_UDRE_InterruptEnable();
-			}
-			else
-			{
-				;
-			}
-		}
-		else
-		{
-			Local_ErrorState = NOK;
-		}
-	}
-
-	return Local_ErrorState;
-}
-
-
-error_t SUART_SendBuffersAsync(const u8 * const Add_pu8BufferArr[], const u16 Add_pu16LengthArr[], u8 Copy_u8Count)
-{
-	error_t Local_ErrorState = OK; /* Final function status */
-	u8 Local_u8Index = 0U;         /* Loop counter */
-
-	/* Check input array pointers validity */
-	if ((Add_pu8BufferArr == NULLPTR) || (Add_pu16LengthArr == NULLPTR))
-	{
-		Local_ErrorState = NULL_PTR;
-	}
-	/* Check count validity */
-	else if (Copy_u8Count == 0U)
-	{
-		Local_ErrorState = OUT_OF_RANGE;
-	}
-	/* Check if TX queue has enough free space for all requests */
-	else if ((SUART_u8TxCount + Copy_u8Count) > SUART_TX_QUEUE_SIZE)
-	{
-		Local_ErrorState = NOK;
-	}
-	else
-	{
-		/* Validate all pointers and lengths first */
-		for (Local_u8Index = 0U; Local_u8Index < Copy_u8Count; Local_u8Index++)
-		{
-			if (Add_pu8BufferArr[Local_u8Index] == NULLPTR)
-			{
-				Local_ErrorState = NULL_PTR;
-				break;
-			}
-			else if (Add_pu16LengthArr[Local_u8Index] == 0U)
-			{
-				Local_ErrorState = OUT_OF_RANGE;
-				break;
-			}
-			else
-			{
-				;
-			}
-		}
-
-		/* Queue all TX requests only if validation succeeded */
-		if (Local_ErrorState == OK)
-		{
-			for (Local_u8Index = 0U; Local_u8Index < Copy_u8Count; Local_u8Index++)
-			{
-				SUART_TxQueue[SUART_u8TxTail].Data   = Add_pu8BufferArr[Local_u8Index];
-				SUART_TxQueue[SUART_u8TxTail].Length = Add_pu16LengthArr[Local_u8Index];
-
-				SUART_u8TxTail++;
-				if (SUART_u8TxTail >= SUART_TX_QUEUE_SIZE)
-				{
-					SUART_u8TxTail = 0U;
-				}
-				else
-				{
-					;
-				}
-
-				SUART_u8TxCount++;
-			}
-
-			if (SUART_u8TxState == SUART_IDLE)
-			{
-				SUART_u8TxState = SUART_BUSY;
-				UART_UDRE_InterruptEnable();
-			}
-			else
-			{
-				;
-			}
-		}
-		else
-		{
-			;
-		}
-	}
-
-	return Local_ErrorState;
-}
-
-
-error_t SUART_ReceiveAsync(u8 *Add_pu8Buffer, u16 Copy_u16Length)
-{
-	error_t Local_ErrorState = OK; /* Final function status */
-
-	/* Check input pointer validity */
-	if (Add_pu8Buffer == NULLPTR)
-	{
-		Local_ErrorState = NULL_PTR;
-	}
-	/* Check length validity */
-	else if (Copy_u16Length == 0U)
-	{
-		Local_ErrorState = OUT_OF_RANGE;
-	}
-	else
-	{
-		/* Check if RX queue has free space */
-		if (SUART_u8RxCount < SUART_RX_QUEUE_SIZE)
-		{
-			/* Store the RX request in the queue */
-			SUART_RxQueue[SUART_u8RxTail].Buffer = Add_pu8Buffer;
-			SUART_RxQueue[SUART_u8RxTail].Length = Copy_u16Length;
-
-			/* Move tail to the next queue slot */
-			SUART_u8RxTail++;
-			if (SUART_u8RxTail >= SUART_RX_QUEUE_SIZE)
-			{
-				SUART_u8RxTail = 0U;
-			}
-			else
-			{
-				;
-			}
-
-			/* Increase number of queued RX requests */
-			SUART_u8RxCount++;
-
-			/* Start reception if the service is currently idle */
-			if (SUART_u8RxState == SUART_IDLE)
-			{
-				SUART_u8RxState = SUART_BUSY;
-				UART_RX_InterruptEnable();
-			}
-			else
-			{
-				;
-			}
-		}
-		else
-		{
-			Local_ErrorState = NOK;
-		}
-	}
-
-	return Local_ErrorState;
-}
-
-error_t SUART_ReceiveBuffersAsync(u8 *Add_pu8BufferArr[], const u16 Add_pu16LengthArr[], u8 Copy_u8Count)
-{
-	error_t Local_ErrorState = OK; /* Final function status */
-	u8 Local_u8Index = 0U;         /* Loop counter */
-
-	/* Check input array pointers validity */
-	if ((Add_pu8BufferArr == NULLPTR) || (Add_pu16LengthArr == NULLPTR))
-	{
-		Local_ErrorState = NULL_PTR;
-	}
-	/* Check count validity */
-	else if (Copy_u8Count == 0U)
-	{
-		Local_ErrorState = OUT_OF_RANGE;
-	}
-	/* Check if RX queue has enough free space for all requests */
-	else if ((SUART_u8RxCount + Copy_u8Count) > SUART_RX_QUEUE_SIZE)
-	{
-		Local_ErrorState = NOK;
-	}
-	else
-	{
-		/* Validate all pointers and lengths first */
-		for (Local_u8Index = 0U; Local_u8Index < Copy_u8Count; Local_u8Index++)
-		{
-			if (Add_pu8BufferArr[Local_u8Index] == NULLPTR)
-			{
-				Local_ErrorState = NULL_PTR;
-				break;
-			}
-			else if (Add_pu16LengthArr[Local_u8Index] == 0U)
-			{
-				Local_ErrorState = OUT_OF_RANGE;
-				break;
-			}
-			else
-			{
-				;
-			}
-		}
-
-		/* Queue all RX requests only if validation succeeded */
-		if (Local_ErrorState == OK)
-		{
-			for (Local_u8Index = 0U; Local_u8Index < Copy_u8Count; Local_u8Index++)
-			{
-				SUART_RxQueue[SUART_u8RxTail].Buffer = Add_pu8BufferArr[Local_u8Index];
-				SUART_RxQueue[SUART_u8RxTail].Length = Add_pu16LengthArr[Local_u8Index];
-
-				SUART_u8RxTail++;
-				if (SUART_u8RxTail >= SUART_RX_QUEUE_SIZE)
-				{
-					SUART_u8RxTail = 0U;
-				}
-				else
-				{
-					;
-				}
-
-				SUART_u8RxCount++;
-			}
-
-			if (SUART_u8RxState == SUART_IDLE)
-			{
-				SUART_u8RxState = SUART_BUSY;
-				UART_RX_InterruptEnable();
-			}
-			else
-			{
-				;
-			}
-		}
-		else
-		{
-			;
-		}
-	}
-
-	return Local_ErrorState;
-}
-
-
 error_t SUART_TX_SetCallBack(SUART_Callback_t Add_pfCallBack)
 {
-	error_t Local_ErrorState = OK; /* Final function status */
-
-	/* Check callback pointer validity */
-	if (Add_pfCallBack != NULLPTR)
+	error_t state =OK;
+	if(Add_pfCallBack != NULLPTR)
 	{
-		SUART_TX_Fptr = Add_pfCallBack;
+		SUART_TX_Fptr=Add_pfCallBack;
 	}
 	else
 	{
-		Local_ErrorState = NULL_PTR;
+		state=NULL_PTR;
 	}
-
-	return Local_ErrorState;
+	return state;
 }
-
-
+error_t SUART_ReceiveAsync( c8 *srt , u8 size)
+{
+	error_t state =OK;
+	if(RX_Busy == 0U)
+	{
+		if( (size <= 1U))
+		{
+			state = OUT_OF_RANGE;
+		}
+		else if(srt == NULLPTR)
+		{
+			state=NULL_PTR;
+		}
+		else
+		{
+			RX_Busy=1U;
+			RX_index = 0U;
+			RX_Buffer=srt;
+			RX_Size=size-1U;
+			RX_Buffer[size-1U] = '\0';
+			UART_RX_InterruptEnable();
+		}
+	}
+	else
+	{
+		state = IN_PROGRESS;
+	}
+	return state;
+}
 error_t SUART_RX_SetCallBack(SUART_Callback_t Add_pfCallBack)
 {
-	error_t Local_ErrorState = OK; /* Final function status */
-
-	/* Check callback pointer validity */
-	if (Add_pfCallBack != NULLPTR)
+	error_t state =OK;
+	if(Add_pfCallBack != NULLPTR)
 	{
-		SUART_RX_Fptr = Add_pfCallBack;
+		SUART_RX_Fptr=Add_pfCallBack;
 	}
 	else
 	{
-		Local_ErrorState = NULL_PTR;
+		state=NULL_PTR;
 	}
-
-	return Local_ErrorState;
+	return state;
+	
 }
