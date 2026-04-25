@@ -10,6 +10,7 @@ The project demonstrates structured embedded driver development including:
 * Modular driver architecture
 * Clean and reusable APIs
 * Configuration separation (MCAL / CFG)
+* Service layer support for higher-level communication features
 
 ---
 
@@ -71,9 +72,20 @@ ATMEGA32_Drivers
 │   │   ├── TIMER_Cfg.c
 │   │   └── TIMER_Cfg.h
 │   │
-│   └── UART
-│       ├── UART_Cfg.c
-│       └── UART_Cfg.h
+│   ├── UART
+│   │   ├── UART_Cfg.c
+│   │   └── UART_Cfg.h
+│   │
+│   └── SUART
+│       ├── SUART_Cfg.c
+│       └── SUART_Cfg.h
+│
+├── SERVICE
+│   └── SUART
+│       ├── SUART_Int.h
+│       ├── SUART_Private.h
+│       ├── SUART_Prg.c
+│       └── README.md
 │
 ├── MemMap.h
 ├── StdTypes.h
@@ -273,12 +285,53 @@ CFG/UART
 
 ---
 
+## 🔹 UART Service Layer (SUART)
+
+Provides a lightweight higher-level UART service built on top of the UART MCAL driver.
+
+### Features
+
+* Asynchronous transmission of **null-terminated strings**
+* FIFO **TX queue** for multiple pending string requests
+* Interrupt-driven TX using **UART UDRE interrupt**
+* Asynchronous reception into a **user-provided buffer**
+* Fixed-capacity RX request model
+* RX completion and TX completion callbacks
+* Simple API focused on practical application use
+
+### Notes
+
+* `SUART_SendAsync()` accepts a pointer to a null-terminated string.
+* TX queue stores **string pointers only**, so the source string must remain valid until transmission is completed.
+* `SUART_ReceiveAsync()` takes a buffer pointer and the **total buffer size**.
+* RX reserves the **last byte** of the buffer for `\0`.
+* Therefore, if the buffer size is `N`, the number of received characters is `N - 1`.
+* Only **one RX request** can be active at a time.
+* If an RX request is already active, `SUART_ReceiveAsync()` returns `IN_PROGRESS`.
+
+### Location
+
+```text
+SERVICE/UART
+```
+
+### Configuration
+
+```text
+CFG/SUART
+```
+
+---
+
 # Driver Architecture
 
-The drivers follow a layered architecture commonly used in embedded systems:
+The repository follows a layered architecture commonly used in embedded systems:
 
 ```text
 Application Layer
+        │
+        ▼
+   Service Layer
         │
         ▼
     MCAL Drivers
@@ -287,7 +340,7 @@ Application Layer
  Hardware Registers
 ```
 
-Applications interact only with driver APIs while the drivers handle low-level register operations.
+Applications may use either the MCAL APIs directly or higher-level service modules when needed.
 
 ---
 
@@ -297,6 +350,7 @@ Each driver is divided into:
 
 * **MCAL/** → Driver implementation (reusable)
 * **CFG/** → User configuration (project-specific)
+* **SERVICE/** → Higher-level services built on top of MCAL drivers
 
 Example (EXTI):
 
@@ -342,6 +396,12 @@ const UART_Config_t UART_Config =
     .tx_enable = TRUE,
     .rx_enable = TRUE
 };
+```
+
+Example (SUART):
+
+```c
+#define SUART_TX_QUEUE_SIZE    5U
 ```
 
 ---
@@ -443,6 +503,54 @@ int main(void)
 
 ---
 
+# Example Usage (SUART)
+
+```c
+#include "UART_Int.h"
+#include "SUART_Int.h"
+
+static const c8 Msg1[] = "HELLO";
+static const c8 Msg2[] = "DONE";
+static c8 RxBuffer[8];
+
+void TxDone(void)
+{
+    /* One queued string finished transmission */
+}
+
+void RxDone(void)
+{
+    /* RX request completed */
+}
+
+int main(void)
+{
+    UART_Init();
+    SUART_Init();
+
+    SUART_TX_SetCallBack(TxDone);
+    SUART_RX_SetCallBack(RxDone);
+
+    GLOBAL_ENABLE();
+
+    SUART_SendAsync(Msg1);
+    SUART_SendAsync(Msg2);
+    SUART_ReceiveAsync(RxBuffer, sizeof(RxBuffer));
+
+    while(1)
+    {
+        /* Application loop */
+    }
+}
+```
+
+In this example:
+
+* `Msg1` and `Msg2` are queued and transmitted in order.
+* `RxBuffer` has total size `8`, so SUART receives **7 characters** and reserves the last byte for `\0`.
+
+---
+
 # Design Principles
 
 Drivers in this repository follow key embedded software practices:
@@ -450,6 +558,7 @@ Drivers in this repository follow key embedded software practices:
 * Hardware abstraction (no direct register access in application)
 * Modular driver design
 * Separation of configuration and logic
+* Reusable MCAL and service-layer architecture
 * No magic numbers (enums & macros used)
 * Scalable and reusable architecture
 * Consistent coding style across all drivers
