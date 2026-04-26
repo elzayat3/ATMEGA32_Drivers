@@ -50,10 +50,15 @@ ATMEGA32_Drivers
 │   │   ├── TIMER_Private.h
 │   │   └── TIMER_Program.c
 │   │
-│   └── UART
-│       ├── UART_Int.h
-│       ├── UART_Private.h
-│       └── UART_Prg.c
+│   ├── UART
+│   │   ├── UART_Int.h
+│   │   ├── UART_Private.h
+│   │   └── UART_Prg.c
+│   │
+│   └── SPI
+│       ├── SPI_Int.h
+│       ├── SPI_Private.h
+│       └── SPI_Program.c
 │
 ├── CFG
 │   ├── DIO
@@ -75,6 +80,10 @@ ATMEGA32_Drivers
 │   ├── UART
 │   │   ├── UART_Cfg.c
 │   │   └── UART_Cfg.h
+│   │
+│   ├── SPI
+│   │   ├── SPI_Cfg.c
+│   │   └── SPI_Cfg.h
 │   │
 │   └── SUART
 │       ├── SUART_Cfg.c
@@ -285,6 +294,61 @@ CFG/UART
 
 ---
 
+## 🔹 SPI Driver
+
+Provides APIs for configuring and controlling the Serial Peripheral Interface peripheral of ATmega32.
+
+### Features
+
+* Configuration-based initialization using `SPI_Config_t`
+* Supports **Master mode** and **Slave mode**
+* Configurable SPI parameters:
+  * Data order
+  * Clock polarity
+  * Clock phase
+  * Clock rate / prescaler
+  * Interrupt enable state
+* Blocking byte transmission and reception
+* Full-duplex blocking transfer using `SPI_TransceiveByte()`
+* Non-blocking polling byte transfer APIs
+* SPI interrupt enable/disable APIs
+* Callback registration for SPI Transfer Complete interrupt
+* Timeout protection in blocking APIs
+* Clean separation between SPI driver logic and SPI pin configuration
+
+### Notes
+
+* SPI is a **full-duplex** protocol, so every transfer sends and receives data at the same time.
+* `SPI_SendByte()` internally uses `SPI_TransceiveByte()` and ignores the received byte.
+* `SPI_ReceiveByte()` sends a dummy byte internally to generate SPI clock in Master mode.
+* SPI pins should be configured using the DIO driver before calling `SPI_Init()`.
+* In Master mode, `SS / PB4` should be configured as output to prevent the hardware from clearing the `MSTR` bit automatically.
+* Blocking APIs should be used while SPI interrupt is disabled.
+* Non-blocking polling APIs should not be mixed with SPI interrupt mode.
+
+### SPI Pins
+
+| SPI Signal | ATmega32 Pin |
+|---|---|
+| `SS` | `PB4` |
+| `MOSI` | `PB5` |
+| `MISO` | `PB6` |
+| `SCK` | `PB7` |
+
+### Location
+
+```text
+MCAL/SPI
+```
+
+### Configuration
+
+```text
+CFG/SPI
+```
+
+---
+
 ## 🔹 UART Service Layer (SUART)
 
 Provides a lightweight higher-level UART service built on top of the UART MCAL driver.
@@ -398,6 +462,20 @@ const UART_Config_t UART_Config =
 };
 ```
 
+Example (SPI):
+
+```c
+const SPI_Config_t SPI_Config =
+{
+    .mode = SPI_MASTER_MODE,
+    .data_order = SPI_MSB_FIRST,
+    .clock_polarity = SPI_IDLE_LOW,
+    .clock_phase = SPI_SAMPLE_LEADING,
+    .clock_rate = SPI_CLOCK_DIV_16,
+    .interrupt_enable = FALSE
+};
+```
+
 Example (SUART):
 
 ```c
@@ -503,6 +581,69 @@ int main(void)
 
 ---
 
+# Example Usage (SPI)
+
+```c
+#include "DIO_Int.h"
+#include "SPI_Int.h"
+
+int main(void)
+{
+    uint8_t received_data = 0u;
+
+    /*
+     * Master mode pin configuration:
+     * SS   -> Output
+     * MOSI -> Output
+     * MISO -> Input
+     * SCK  -> Output
+     */
+
+    DIO_InitPin(PINB4, OUTPUT);
+    DIO_InitPin(PINB5, OUTPUT);
+    DIO_InitPin(PINB6, INFREE);
+    DIO_InitPin(PINB7, OUTPUT);
+
+    DIO_WritePin(PINB4, HIGH);
+
+    SPI_Init();
+
+    SPI_TransceiveByte(0x55u, &received_data);
+
+    while(1)
+    {
+        /* Application loop */
+    }
+}
+```
+
+Example (SPI interrupt callback):
+
+```c
+#include "SPI_Int.h"
+
+void SPI_Task(void)
+{
+    /* SPI transfer complete task */
+}
+
+int main(void)
+{
+    SPI_Init();
+
+    SPI_SetCallBack(SPI_Task);
+    SPI_InterruptEnable();
+    GLOBAL_ENABLE();
+
+    while(1)
+    {
+        /* Application loop */
+    }
+}
+```
+
+---
+
 # Example Usage (SUART)
 
 ```c
@@ -569,7 +710,6 @@ Drivers in this repository follow key embedded software practices:
 
 Planned drivers to be added:
 
-* SPI Driver
 * I2C (TWI) Driver
 
 ---
