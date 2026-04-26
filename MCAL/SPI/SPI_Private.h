@@ -56,21 +56,24 @@
 /*                         Configuration Validation                           */
 /* ========================================================================== */
 
-#define SPI_IS_VALID_MODE(MODE)             (((MODE) == SPI_SLAVE_MODE) || \
-                                             ((MODE) == SPI_MASTER_MODE))
+#define SPI_IS_VALID_MODE(MODE)              \
+((((MODE) == SPI_SLAVE_MODE) || ((MODE) == SPI_MASTER_MODE)) ? TRUE : FALSE)
 
-#define SPI_IS_VALID_DATA_ORDER(ORDER)      (((ORDER) == SPI_MSB_FIRST) || \
-                                             ((ORDER) == SPI_LSB_FIRST))
+#define SPI_IS_VALID_DATA_ORDER(ORDER)       \
+((((ORDER) == SPI_MSB_FIRST) || ((ORDER) == SPI_LSB_FIRST)) ? TRUE : FALSE)
 
-#define SPI_IS_VALID_CLOCK_POLARITY(POL)    (((POL) == SPI_IDLE_LOW) || \
-                                             ((POL) == SPI_IDLE_HIGH))
+#define SPI_IS_VALID_CLOCK_POLARITY(POL)     \
+((((POL) == SPI_IDLE_LOW) || ((POL) == SPI_IDLE_HIGH)) ? TRUE : FALSE)
 
-#define SPI_IS_VALID_CLOCK_PHASE(PHASE)     (((PHASE) == SPI_SAMPLE_LEADING) || \
-                                             ((PHASE) == SPI_SAMPLE_TRAILING))
+#define SPI_IS_VALID_CLOCK_PHASE(PHASE)      \
+((((PHASE) == SPI_SAMPLE_LEADING) || ((PHASE) == SPI_SAMPLE_TRAILING)) ? TRUE : FALSE)
 
-#define SPI_IS_VALID_CLOCK_RATE(RATE)       ((RATE) <= SPI_CLOCK_DIV_32)
+#define SPI_IS_VALID_CLOCK_RATE(RATE)        \
+(((RATE) <= SPI_CLOCK_DIV_32) ? TRUE : FALSE)
 
-#define SPI_IS_VALID_BOOL(STATE)            (((STATE) == FALSE) || \
-                                             ((STATE) == TRUE))
+#define SPI_IS_VALID_BOOL(STATE)             \
+((((STATE) == FALSE) || ((STATE) == TRUE)) ? TRUE : FALSE)
+
+#define SPI_TIMEOUT_VALUE    ((uint32_t)100000UL)
 
 #endif /* SPI_PRIVATE_H_ */
