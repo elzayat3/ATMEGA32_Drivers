@@ -125,20 +125,18 @@ error_t SPI_Init(void);
  *
  * This function sets the SPE bit to enable SPI operations.
  *
- * @return error_t
- * @retval OK  SPI peripheral enabled successfully.
+ * @return void
  */
-error_t SPI_Enable(void);
+void SPI_Enable(void);
 
 /**
  * @brief Disables the SPI peripheral.
  *
  * This function clears the SPE bit to disable SPI operations.
  *
- * @return error_t
- * @retval OK  SPI peripheral disabled successfully.
+ * @return void
  */
-error_t SPI_Disable(void);
+void SPI_Disable(void);
 
 /**
  * @brief Sends one byte through SPI using blocking mode.
@@ -181,15 +179,28 @@ error_t SPI_ReceiveByte(uint8_t *data);
 error_t SPI_TransceiveByte(uint8_t tx_data, uint8_t *rx_data);
 
 /**
- * @brief Sends one byte through SPI using non-blocking mode.
+ * @brief Sends one byte through SPI using non-blocking polling mode.
  *
- * This function writes data only if SPI is ready.
+ * This function starts SPI transmission if SPI is idle and returns immediately.
+ * The function must be called repeatedly until it returns OK.
  *
- * @param data Byte to be transmitted.
+ * On the first call, the byte is written to SPDR and the function returns
+ * IN_PROGRESS because the transfer has started but is not completed yet.
+ *
+ * When the transfer is completed, the function reads SPDR to clear the SPIF flag
+ * and returns OK.
+ *
+ * @note The data parameter is used only when a new transfer is started.
+ *       While SPI is busy, the passed data value is ignored.
+ *
+ * @note This function should not be used together with SPI interrupt mode,
+ *       because the ISR may clear the busy state before this function reads SPDR.
+ *
+ * @param data Byte to be transmitted when SPI is idle.
  *
  * @return error_t
- * @retval OK           Data written successfully.
- * @retval IN_PROGRESS  SPI is busy.
+ * @retval OK           Transfer completed successfully.
+ * @retval IN_PROGRESS  Transfer has started or is still in progress.
  */
 error_t SPI_SendByteNoBlock(uint8_t data);
 
@@ -225,23 +236,29 @@ error_t SPI_TransceiveByteNoBlock(uint8_t tx_data, uint8_t *rx_data);
 /**
  * @brief Enables SPI interrupt.
  *
- * @return error_t
- * @retval OK  SPI interrupt enabled successfully.
+ * This function sets the SPIE bit in SPCR register.
+ *
+ * @note This function only enables SPI interrupt from the peripheral side.
+ *       Global interrupt must be enabled separately using sei().
+ *
+ * @return void
  */
-error_t SPI_InterruptEnable(void);
+void SPI_InterruptEnable(void);
 
 /**
  * @brief Disables SPI interrupt.
  *
- * @return error_t
- * @retval OK  SPI interrupt disabled successfully.
+ * This function clears the SPIE bit in SPCR register.
+ *
+ * @return void
  */
-error_t SPI_InterruptDisable(void);
+void SPI_InterruptDisable(void);
 
 /**
  * @brief Sets callback function for SPI interrupt.
  *
- * The callback function is executed inside the SPI interrupt service routine.
+ * The callback function is executed inside the SPI interrupt service routine
+ * when SPI transfer is complete.
  *
  * @param callback Pointer to callback function.
  *
